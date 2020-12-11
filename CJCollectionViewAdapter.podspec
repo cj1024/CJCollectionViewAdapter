@@ -11,7 +11,7 @@ Provide Each Section A Simple Way To Have A Sticky|Separator|Inner Header|Footer
   s.license          = { :type => 'MIT', :file => 'LICENSE' }
   s.author           = { 'cj1024' => 'jianchen1024@gmail.com' }
   s.source           = { :git => 'https://github.com/cj1024/CJCollectionViewAdapter.git', :tag => s.version.to_s }
-  s.screenshots      = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
+  s.screenshots      = 'https://ftp.bmp.ovh/imgs/2020/12/a6fc4de3dfcabb6a.png'
 
   s.ios.deployment_target = '9.0'
 

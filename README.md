@@ -63,6 +63,10 @@ pod 'CJCollectionViewAdapter'
 
 1. Implement DataSource And Delegate Methods If Necessary In SectionData
 
+## ScreenShot
+
+![ScreenShot1](https://ftp.bmp.ovh/imgs/2020/12/a6fc4de3dfcabb6a.png)
+
 ## Author
 
 cj1024, jianchen1024@gmail.com
