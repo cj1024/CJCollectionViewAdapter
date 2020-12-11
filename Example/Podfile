@@ -1,0 +1,18 @@
+use_frameworks!
+
+platform :ios, '9.0'
+
+target 'CJCollectionViewAdapter_Example' do
+  pod 'CJCollectionViewAdapter', :path => '../'
+  pod 'CJCollectionViewAdapter/Cell', :path => '../'
+  pod 'SDWebImage'
+  pod 'Masonry'
+  pod 'Toast'
+  pod 'MJRefresh'
+  pod 'CJCarouselView'
+  target 'CJCollectionViewAdapter_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end
