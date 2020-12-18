@@ -321,6 +321,9 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         return @[];
     }
     NSInteger index = [self.internalSections indexOfObject:section];
+    if (index >= self.bridgedCollectionView.numberOfSections) {
+        return @[];
+    }
     __block NSMutableArray <__kindof UICollectionViewLayoutAttributes *> *attributes = [NSMutableArray <__kindof UICollectionViewLayoutAttributes *> array];
     if (section.sectionStickyHeaderHeightRecorder) {
         UICollectionViewLayoutAttributes *attribute = [self layoutAttributesForSupplementaryViewOfKind:kCJCollectionViewAdapterStickyHeaderKindKey atIndexPath:[NSIndexPath indexPathForItem:-1 inSection:index]];
