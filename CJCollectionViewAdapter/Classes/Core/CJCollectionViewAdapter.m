@@ -650,7 +650,11 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 - (void)sectionDataReload:(nonnull CJCollectionViewSectionData *)sectionData animated:(BOOL)animated {
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];
-        [self sectionDataAtSectionReload:section animated:animated];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            [self sectionDataAtSectionReload:section animated:animated];
+        } else {
+            [self.bridgedCollectionView reloadData];
+        }
     }
 }
 
@@ -700,18 +704,29 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 - (void)sectionDataAtSectionsDelete:(nonnull NSArray <NSNumber *> *)sections animated:(BOOL)animated {
     __block NSMutableIndexSet *indexSet = [NSMutableIndexSet indexSet];
     __block NSMutableArray <__kindof CJCollectionViewSectionData *> *finalSections = [self.internalSections mutableCopy];
+    __block BOOL needReloadAll = NO;
     [sections enumerateObjectsUsingBlock:^(NSNumber * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
         NSInteger section = [obj integerValue];
         if (section < self.internalSections.count) {
             __kindof CJCollectionViewSectionData *sectionData = self.internalSections[section];
             [finalSections removeObject:sectionData];
-            [indexSet addIndexes:[NSIndexSet indexSetWithIndex:section]];
+            if (section < self.bridgedCollectionView.numberOfSections) {
+                [indexSet addIndexes:[NSIndexSet indexSetWithIndex:section]];
+            } else {
+                needReloadAll = YES;
+            }
         }
     }];
-    if (indexSet.count > 0) {
-        self.internalSections = [finalSections copy];
-        [self prepareLayout];
+    if (needReloadAll) {
         [self performCollectionViewUpdate:^{
+            self.internalSections = [finalSections copy];
+            [self prepareLayout];
+            [self.bridgedCollectionView reloadData];
+        } withAnimation:animated];
+    } else if (indexSet.count > 0) {
+        [self performCollectionViewUpdate:^{
+            self.internalSections = [finalSections copy];
+            [self prepareLayout];
             [self.bridgedCollectionView deleteSections:indexSet];
         } withAnimation:animated];
     }
@@ -734,9 +749,9 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
             [indexSet addIndexes:[NSIndexSet indexSetWithIndex:realIndex]];
         }];
         if (indexSet.count > 0) {
-            self.internalSections = [sections copy];
-            [self prepareLayoutForSectionsInsertBeginAtIndex:section length:sectionDataList.count];
             [self performCollectionViewUpdate:^{
+                self.internalSections = [sections copy];
+                [self prepareLayoutForSectionsInsertBeginAtIndex:section length:sectionDataList.count];
                 [self.bridgedCollectionView insertSections:indexSet];
             } withAnimation:animated];
         }
@@ -752,22 +767,29 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         NSInteger section = [self.internalSections indexOfObject:sectionData];
         NSInteger item = [sectionData sectionSeparatorHeaderIndex:self.bridgedCollectionView forOriginalSection:section];
         NSInteger oldItem = sectionData.sectionSeparatorHeaderIndexRecorder;
-        if (item < 0 && oldItem >= 0) {
-            // Delete
-            [self prepareLayout];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            if (item < 0 && oldItem >= 0) {
+                // Delete
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:oldItem inSection:section] ]];
+                } withAnimation:animated];
+            } else if (item >= 0 && oldItem < 0) {
+                // Insert
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            } else if (item >= 0 && item == oldItem) {
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            }
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:oldItem inSection:section] ]];
-            } withAnimation:animated];
-        } else if (item >= 0 && oldItem < 0) {
-            // Insert
-            [self prepareLayout];
-            [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
-            } withAnimation:animated];
-        } else if (item >= 0) {
-            [self prepareLayout];
-            [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
         sectionData.sectionSeparatorHeaderIndexRecorder = item;
@@ -778,10 +800,17 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];
         NSInteger item = [sectionData sectionSeparatorHeaderIndex:self.bridgedCollectionView forOriginalSection:section];
-        if (item >= 0) {
-            [self prepareLayout];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            if (item >= 0) {
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            }
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
         sectionData.sectionSeparatorHeaderIndexRecorder = item;
@@ -791,11 +820,18 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 - (void)sectionDataDeleteSeparatorHeader:(nonnull CJCollectionViewSectionData *)sectionData animated:(BOOL)animated {
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];
-        NSInteger item = 0;
-        if (item >= 0) {
-            [self prepareLayout];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            NSInteger item = 0;
+            if (item >= 0) {
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            }
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
         sectionData.sectionSeparatorHeaderIndexRecorder = -1;
@@ -807,22 +843,29 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         NSInteger section = [self.internalSections indexOfObject:sectionData];
         NSInteger item = [sectionData sectionInnerHeaderIndex:self.bridgedCollectionView forOriginalSection:section];
         NSInteger oldItem = sectionData.sectionInnerHeaderIndexRecorder;
-        if (item < 0 && oldItem >= 0) {
-            // Delete
-            [self prepareLayout];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            if (item < 0 && oldItem >= 0) {
+                // Delete
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:oldItem inSection:section] ]];
+                } withAnimation:animated];
+            } else if (item >= 0 && oldItem < 0) {
+                // Insert
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            } else if (item >= 0) {
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            }
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:oldItem inSection:section] ]];
-            } withAnimation:animated];
-        } else if (item >= 0 && oldItem < 0) {
-            // Insert
-            [self prepareLayout];
-            [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
-            } withAnimation:animated];
-        } else if (item >= 0) {
-            [self prepareLayout];
-            [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
         sectionData.sectionInnerHeaderIndexRecorder = item;
@@ -833,10 +876,17 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];
         NSInteger item = [sectionData sectionInnerHeaderIndex:self.bridgedCollectionView forOriginalSection:section];
-        if (item >= 0) {
-            [self prepareLayout];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            if (item >= 0) {
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            }
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
         sectionData.sectionInnerHeaderIndexRecorder = item;
@@ -847,10 +897,17 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];
         NSInteger item = [sectionData hasSectionSeparatorHeader:self.bridgedCollectionView forOriginalSection:section] ? 1 : 0;
-        if (item >= 0) {
-            [self prepareLayout];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            if (item >= 0) {
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            }
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
         sectionData.sectionInnerHeaderIndexRecorder = -1;
@@ -860,17 +917,24 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 - (void)sectionDataReload:(nonnull CJCollectionViewSectionData *)sectionData items:(nonnull NSArray <NSNumber *> *)items animated:(BOOL)animated {
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];
-        NSRange itemRange = [sectionData sectionItemRange:self.bridgedCollectionView forOriginalSection:section];
-        if (itemRange.length >= 0) {
-            NSMutableArray <NSIndexPath *> *indexes = [NSMutableArray <NSIndexPath *> arrayWithCapacity:items.count];
-            for (NSNumber *item in items) {
-                if ([item integerValue] >= 0) {
-                    [indexes addObject:[NSIndexPath indexPathForItem:[item integerValue] + itemRange.location inSection:section]];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            NSRange itemRange = [sectionData sectionItemRange:self.bridgedCollectionView forOriginalSection:section];
+            if (itemRange.length >= 0) {
+                NSMutableArray <NSIndexPath *> *indexes = [NSMutableArray <NSIndexPath *> arrayWithCapacity:items.count];
+                for (NSNumber *item in items) {
+                    if ([item integerValue] >= 0) {
+                        [indexes addObject:[NSIndexPath indexPathForItem:[item integerValue] + itemRange.location inSection:section]];
+                    }
                 }
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView reloadItemsAtIndexPaths:indexes];
+                } withAnimation:animated];
             }
-            [self prepareLayout];
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView reloadItemsAtIndexPaths:indexes];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
     }
@@ -879,17 +943,24 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 - (void)sectionDataInsert:(nonnull CJCollectionViewSectionData *)sectionData items:(nonnull NSArray <NSNumber *> *)items animated:(BOOL)animated {
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];
-        NSRange itemRange = [sectionData sectionItemRange:self.bridgedCollectionView forOriginalSection:section];
-        if (itemRange.length >= 0) {
-            NSMutableArray <NSIndexPath *> *indexes = [NSMutableArray <NSIndexPath *> arrayWithCapacity:items.count];
-            for (NSNumber *item in items) {
-                if ([item integerValue] >= 0) {
-                    [indexes addObject:[NSIndexPath indexPathForItem:[item integerValue] + itemRange.location inSection:section]];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            NSRange itemRange = [sectionData sectionItemRange:self.bridgedCollectionView forOriginalSection:section];
+            if (itemRange.length >= 0) {
+                NSMutableArray <NSIndexPath *> *indexes = [NSMutableArray <NSIndexPath *> arrayWithCapacity:items.count];
+                for (NSNumber *item in items) {
+                    if ([item integerValue] >= 0) {
+                        [indexes addObject:[NSIndexPath indexPathForItem:[item integerValue] + itemRange.location inSection:section]];
+                    }
                 }
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView insertItemsAtIndexPaths:indexes];
+                } withAnimation:animated];
             }
-            [self prepareLayout];
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView insertItemsAtIndexPaths:indexes];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
     }
@@ -898,17 +969,24 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 - (void)sectionDataDelete:(nonnull CJCollectionViewSectionData *)sectionData items:(nonnull NSArray <NSNumber *> *)items animated:(BOOL)animated {
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];
-        NSRange itemRange = [sectionData sectionItemRange:self.bridgedCollectionView forOriginalSection:section];
-        if (itemRange.length >= 0) {
-            NSMutableArray <NSIndexPath *> *indexes = [NSMutableArray <NSIndexPath *> arrayWithCapacity:items.count];
-            for (NSNumber *item in items) {
-                if ([item integerValue] >= 0) {
-                    [indexes addObject:[NSIndexPath indexPathForItem:[item integerValue] + itemRange.location inSection:section]];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            NSRange itemRange = [sectionData sectionItemRange:self.bridgedCollectionView forOriginalSection:section];
+            if (itemRange.length >= 0) {
+                NSMutableArray <NSIndexPath *> *indexes = [NSMutableArray <NSIndexPath *> arrayWithCapacity:items.count];
+                for (NSNumber *item in items) {
+                    if ([item integerValue] >= 0) {
+                        [indexes addObject:[NSIndexPath indexPathForItem:[item integerValue] + itemRange.location inSection:section]];
+                    }
                 }
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView deleteItemsAtIndexPaths:indexes];
+                } withAnimation:animated];
             }
-            [self prepareLayout];
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView deleteItemsAtIndexPaths:indexes];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
     }
@@ -919,22 +997,29 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         NSUInteger section = [self.internalSections indexOfObject:sectionData];
         NSInteger item = [sectionData sectionSeparatorFooterIndex:self.bridgedCollectionView forOriginalSection:section];
         NSInteger oldItem = sectionData.sectionSeparatorFooterIndexRecorder;
-        if (item < 0 && oldItem >= 0) {
-            // Delete
-            [self prepareLayout];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            if (item < 0 && oldItem >= 0) {
+                // Delete
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:oldItem inSection:section] ]];
+                } withAnimation:animated];
+            } else if (item >= 0 && oldItem < 0) {
+                // Insert
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            } else if (item >= 0) {
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            }
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:oldItem inSection:section] ]];
-            } withAnimation:animated];
-        } else if (item >= 0 && oldItem < 0) {
-            // Insert
-            [self prepareLayout];
-            [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
-            } withAnimation:animated];
-        } else if (item >= 0) {
-            [self prepareLayout];
-            [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
         sectionData.sectionSeparatorFooterIndexRecorder = item;
@@ -945,10 +1030,17 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];
         NSInteger item = [sectionData sectionSeparatorFooterIndex:self.bridgedCollectionView forOriginalSection:section];
-        if (item >= 0) {
-            [self prepareLayout];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            if (item >= 0) {
+                [self prepareLayout];
+                [self performCollectionViewUpdate:^{
+                    [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            }
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
         sectionData.sectionSeparatorFooterIndexRecorder = item;
@@ -958,15 +1050,22 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 - (void)sectionDataDeleteSeparatorFooter:(nonnull CJCollectionViewSectionData *)sectionData animated:(BOOL)animated {
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];
-        NSRange itemRange = [sectionData sectionItemRange:self.bridgedCollectionView forOriginalSection:section];
-        NSInteger item = itemRange.location + itemRange.length;
-        if ([sectionData hasSectionInnerFooter:self.bridgedCollectionView forOriginalSection:section]) {
-            item++;
-        }
-        if (item >= 0) {
-            [self prepareLayout];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            NSRange itemRange = [sectionData sectionItemRange:self.bridgedCollectionView forOriginalSection:section];
+            NSInteger item = itemRange.location + itemRange.length;
+            if ([sectionData hasSectionInnerFooter:self.bridgedCollectionView forOriginalSection:section]) {
+                item++;
+            }
+            if (item >= 0) {
+                [self prepareLayout];
+                [self performCollectionViewUpdate:^{
+                    [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            }
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
         sectionData.sectionSeparatorFooterIndexRecorder = -1;
@@ -977,23 +1076,30 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     if ([self.internalSections containsObject:sectionData]) {
         NSUInteger section = [self.internalSections indexOfObject:sectionData];
         NSInteger item = [sectionData sectionInnerFooterIndex:self.bridgedCollectionView forOriginalSection:section];
-        NSInteger oldItem = sectionData.sectionInnerFooterIndexRecorder;
-        if (item < 0 && oldItem >= 0) {
-            // Delete
-            [self prepareLayout];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            NSInteger oldItem = sectionData.sectionInnerFooterIndexRecorder;
+            if (item < 0 && oldItem >= 0) {
+                // Delete
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:oldItem inSection:section] ]];
+                } withAnimation:animated];
+            } else if (item >= 0 && oldItem < 0) {
+                // Insert
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            } else if (item >= 0) {
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            }
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:oldItem inSection:section] ]];
-            } withAnimation:animated];
-        } else if (item >= 0 && oldItem < 0) {
-            // Insert
-            [self prepareLayout];
-            [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
-            } withAnimation:animated];
-        } else if (item >= 0) {
-            [self prepareLayout];
-            [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
         sectionData.sectionInnerFooterIndexRecorder = item;
@@ -1004,10 +1110,17 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];
         NSInteger item = [sectionData sectionInnerFooterIndex:self.bridgedCollectionView forOriginalSection:section];
-        if (item >= 0) {
-            [self prepareLayout];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            if (item >= 0) {
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            }
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
         sectionData.sectionInnerFooterIndexRecorder = item;
@@ -1019,10 +1132,17 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         NSInteger section = [self.internalSections indexOfObject:sectionData];
         NSRange itemRange = [sectionData sectionItemRange:self.bridgedCollectionView forOriginalSection:section];
         NSInteger item = itemRange.location + itemRange.length;
-        if (item >= 0) {
-            [self prepareLayout];
+        if (section < self.bridgedCollectionView.numberOfSections) {
+            if (item >= 0) {
+                [self performCollectionViewUpdate:^{
+                    [self prepareLayout];
+                    [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                } withAnimation:animated];
+            }
+        } else {
             [self performCollectionViewUpdate:^{
-                [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
+                [self prepareLayout];
+                [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
         sectionData.sectionInnerFooterIndexRecorder = -1;
