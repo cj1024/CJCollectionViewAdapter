@@ -718,15 +718,15 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         }
     }];
     if (needReloadAll) {
+        self.internalSections = [finalSections copy];
+        [self prepareLayout];
         [self performCollectionViewUpdate:^{
-            self.internalSections = [finalSections copy];
-            [self prepareLayout];
             [self.bridgedCollectionView reloadData];
         } withAnimation:animated];
     } else if (indexSet.count > 0) {
+        self.internalSections = [finalSections copy];
+        [self prepareLayout];
         [self performCollectionViewUpdate:^{
-            self.internalSections = [finalSections copy];
-            [self prepareLayout];
             [self.bridgedCollectionView deleteSections:indexSet];
         } withAnimation:animated];
     }
@@ -749,9 +749,9 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
             [indexSet addIndexes:[NSIndexSet indexSetWithIndex:realIndex]];
         }];
         if (indexSet.count > 0) {
+            self.internalSections = [sections copy];
+            [self prepareLayoutForSectionsInsertBeginAtIndex:section length:sectionDataList.count];
             [self performCollectionViewUpdate:^{
-                self.internalSections = [sections copy];
-                [self prepareLayoutForSectionsInsertBeginAtIndex:section length:sectionDataList.count];
                 [self.bridgedCollectionView insertSections:indexSet];
             } withAnimation:animated];
         }
@@ -762,6 +762,13 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 
 @implementation CJCollectionViewAdapter (SectionChildrenUpdate)
 
+- (void)updateSectionRecordInfo:(nonnull CJCollectionViewSectionData *)sectionData inCollectionView:(nonnull UICollectionView *)collectionView section:(NSUInteger)section {
+    sectionData.sectionSeparatorHeaderIndexRecorder = [sectionData sectionSeparatorHeaderIndex:collectionView forOriginalSection:section];
+    sectionData.sectionInnerHeaderIndexRecorder = [sectionData sectionInnerHeaderIndex:collectionView forOriginalSection:section];
+    sectionData.sectionSeparatorFooterIndexRecorder = [sectionData sectionSeparatorFooterIndex:collectionView forOriginalSection:section];
+    sectionData.sectionInnerFooterIndexRecorder = [sectionData sectionInnerFooterIndex:collectionView forOriginalSection:section];
+}
+
 - (void)sectionDataReloadSeparatorHeader:(nonnull CJCollectionViewSectionData *)sectionData animated:(BOOL)animated {
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];
@@ -770,29 +777,29 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         if (section < self.bridgedCollectionView.numberOfSections) {
             if (item < 0 && oldItem >= 0) {
                 // Delete
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:oldItem inSection:section] ]];
                 } withAnimation:animated];
             } else if (item >= 0 && oldItem < 0) {
                 // Insert
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             } else if (item >= 0 && item == oldItem) {
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        sectionData.sectionSeparatorHeaderIndexRecorder = item;
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -802,18 +809,18 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         NSInteger item = [sectionData sectionSeparatorHeaderIndex:self.bridgedCollectionView forOriginalSection:section];
         if (section < self.bridgedCollectionView.numberOfSections) {
             if (item >= 0) {
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        sectionData.sectionSeparatorHeaderIndexRecorder = item;
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -834,7 +841,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        sectionData.sectionSeparatorHeaderIndexRecorder = -1;
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -846,29 +853,29 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         if (section < self.bridgedCollectionView.numberOfSections) {
             if (item < 0 && oldItem >= 0) {
                 // Delete
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:oldItem inSection:section] ]];
                 } withAnimation:animated];
             } else if (item >= 0 && oldItem < 0) {
                 // Insert
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             } else if (item >= 0) {
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        sectionData.sectionInnerHeaderIndexRecorder = item;
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -878,18 +885,18 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         NSInteger item = [sectionData sectionInnerHeaderIndex:self.bridgedCollectionView forOriginalSection:section];
         if (section < self.bridgedCollectionView.numberOfSections) {
             if (item >= 0) {
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        sectionData.sectionInnerHeaderIndexRecorder = item;
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -899,18 +906,18 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         NSInteger item = [sectionData hasSectionSeparatorHeader:self.bridgedCollectionView forOriginalSection:section] ? 1 : 0;
         if (section < self.bridgedCollectionView.numberOfSections) {
             if (item >= 0) {
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        sectionData.sectionInnerHeaderIndexRecorder = -1;
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -926,17 +933,18 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                         [indexes addObject:[NSIndexPath indexPathForItem:[item integerValue] + itemRange.location inSection:section]];
                     }
                 }
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView reloadItemsAtIndexPaths:indexes];
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -952,17 +960,18 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                         [indexes addObject:[NSIndexPath indexPathForItem:[item integerValue] + itemRange.location inSection:section]];
                     }
                 }
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView insertItemsAtIndexPaths:indexes];
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -978,17 +987,18 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                         [indexes addObject:[NSIndexPath indexPathForItem:[item integerValue] + itemRange.location inSection:section]];
                     }
                 }
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView deleteItemsAtIndexPaths:indexes];
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -1000,29 +1010,29 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         if (section < self.bridgedCollectionView.numberOfSections) {
             if (item < 0 && oldItem >= 0) {
                 // Delete
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:oldItem inSection:section] ]];
                 } withAnimation:animated];
             } else if (item >= 0 && oldItem < 0) {
                 // Insert
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             } else if (item >= 0) {
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        sectionData.sectionSeparatorFooterIndexRecorder = item;
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -1038,12 +1048,12 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        sectionData.sectionSeparatorFooterIndexRecorder = item;
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -1063,12 +1073,12 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        sectionData.sectionSeparatorFooterIndexRecorder = -1;
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -1080,29 +1090,29 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
             NSInteger oldItem = sectionData.sectionInnerFooterIndexRecorder;
             if (item < 0 && oldItem >= 0) {
                 // Delete
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:oldItem inSection:section] ]];
                 } withAnimation:animated];
             } else if (item >= 0 && oldItem < 0) {
                 // Insert
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             } else if (item >= 0) {
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView reloadItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        sectionData.sectionInnerFooterIndexRecorder = item;
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -1112,18 +1122,18 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         NSInteger item = [sectionData sectionInnerFooterIndex:self.bridgedCollectionView forOriginalSection:section];
         if (section < self.bridgedCollectionView.numberOfSections) {
             if (item >= 0) {
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView insertItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        sectionData.sectionInnerFooterIndexRecorder = item;
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -1134,18 +1144,18 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         NSInteger item = itemRange.location + itemRange.length;
         if (section < self.bridgedCollectionView.numberOfSections) {
             if (item >= 0) {
+                [self prepareLayout];
                 [self performCollectionViewUpdate:^{
-                    [self prepareLayout];
                     [self.bridgedCollectionView deleteItemsAtIndexPaths:@[ [NSIndexPath indexPathForItem:item inSection:section] ]];
                 } withAnimation:animated];
             }
         } else {
+            [self prepareLayout];
             [self performCollectionViewUpdate:^{
-                [self prepareLayout];
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        sectionData.sectionInnerFooterIndexRecorder = -1;
+        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
