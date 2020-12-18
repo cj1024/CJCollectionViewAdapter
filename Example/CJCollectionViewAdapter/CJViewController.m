@@ -42,16 +42,6 @@
     [self viewControllerReloadData];
 }
 
-- (void)viewDidLayoutSubviews {
-    [super viewDidLayoutSubviews];
-    [self layoutCollectionView];
-}
-
-- (void)viewLayoutMarginsDidChange {
-    [super viewLayoutMarginsDidChange];
-    [self layoutCollectionView];
-}
-
 - (void)viewSafeAreaInsetsDidChange {
     [super viewSafeAreaInsetsDidChange];
     [self layoutCollectionView];
@@ -112,7 +102,7 @@
 }
 
 - (void)viewControllerShouldReloadData {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self endReloadDataOnError:NO];
         [self viewControllerReloadData];
     });
@@ -123,7 +113,7 @@
 }
 
 - (void)viewControllerShouldLoadMoreData {
-    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(3.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self endLoadMoreData:NO];
         NSUInteger itemsInRow = 1 + (arc4random() % 3);
         [self.adapter sectionDataAppend:[[CJCollectionViewTestSectionData alloc] initWithCount:itemsInRow * (1 + (arc4random() % 3)) itemsInOneRow:itemsInRow animated:(arc4random() % 2) == 0] animated:YES];

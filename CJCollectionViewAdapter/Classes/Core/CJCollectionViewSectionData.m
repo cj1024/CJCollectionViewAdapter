@@ -39,6 +39,17 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
 
 @implementation CJCollectionViewSectionData
 
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        self.sectionSeparatorHeaderIndexRecorder = -1;
+        self.sectionInnerHeaderIndexRecorder = -1;
+        self.sectionSeparatorFooterIndexRecorder = -1;
+        self.sectionInnerFooterIndexRecorder = -1;
+    }
+    return self;
+}
+
 - (void)registerReuseIndentifer:(UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
     [collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:kCJCollectionViewSectionDataDefaultCellReuseIndentifer];
     [collectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:kCJCollectionViewSectionDataDefaultSeparatorHeaderFooterReuseIndentifer];
