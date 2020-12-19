@@ -5,11 +5,12 @@ platform :ios, '9.0'
 target 'CJCollectionViewAdapter_Example' do
   pod 'CJCollectionViewAdapter', :path => '../'
   pod 'CJCollectionViewAdapter/Cell', :path => '../'
+  pod 'CJCarouselView'
   pod 'SDWebImage'
   pod 'Masonry'
   pod 'Toast'
   pod 'MJRefresh'
-  pod 'CJCarouselView'
+  pod 'FLEX'
   target 'CJCollectionViewAdapter_Tests' do
     inherit! :search_paths
 
