@@ -35,6 +35,11 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     return self;
 }
 
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    self.contentView.translatesAutoresizingMaskIntoConstraints = NO;
+}
+
 - (void)prepareForReuse {
     [super prepareForReuse];
     [self setContentView:nil];
@@ -45,12 +50,8 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         [_contentView removeFromSuperview];
     }
     if ([contentView isKindOfClass:[UIView class]]) {
-        contentView.translatesAutoresizingMaskIntoConstraints = NO;
         [self addSubview:contentView];
-        [contentView.topAnchor constraintEqualToAnchor:self.topAnchor].active = YES;
-        [contentView.bottomAnchor constraintEqualToAnchor:self.bottomAnchor].active = YES;
-        [contentView.leftAnchor constraintEqualToAnchor:self.leftAnchor].active = YES;
-        [contentView.rightAnchor constraintEqualToAnchor:self.rightAnchor].active = YES;
+        contentView.frame = self.bounds;
     }
     _contentView = contentView;
 }
