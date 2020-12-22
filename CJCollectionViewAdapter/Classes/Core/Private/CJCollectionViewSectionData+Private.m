@@ -24,6 +24,8 @@
 @dynamic sectionSeparatorFooterIndexRecorder;
 @dynamic sectionInnerFooterIndexRecorder;
 @dynamic cachedLayoutAttributes;
+@dynamic sectionItemsRangeRecorder;
+@dynamic sectionWrappedItemsCountRecorder;
 
 @end
 
