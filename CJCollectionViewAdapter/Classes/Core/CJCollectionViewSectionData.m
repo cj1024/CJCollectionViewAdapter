@@ -32,6 +32,8 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
 @property(nonatomic, strong, readwrite) NSNumber *sectionStickyFooterHeightRecorder;
 @property(nonatomic, assign, readwrite) NSInteger sectionSeparatorFooterIndexRecorder;
 @property(nonatomic, assign, readwrite) NSInteger sectionInnerFooterIndexRecorder;
+@property(nonatomic, assign, readwrite) NSRange sectionItemsRangeRecorder;
+@property(nonatomic, assign, readwrite) NSInteger sectionWrappedItemsCountRecorder;
 
 @property(nonatomic, copy, readwrite, nullable) NSArray <UICollectionViewLayoutAttributes *> *cachedLayoutAttributes;
 
@@ -46,6 +48,8 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
         self.sectionInnerHeaderIndexRecorder = -1;
         self.sectionSeparatorFooterIndexRecorder = -1;
         self.sectionInnerFooterIndexRecorder = -1;
+        self.sectionItemsRangeRecorder = NSMakeRange(0, 0);
+        self.sectionWrappedItemsCountRecorder = 0;
     }
     return self;
 }

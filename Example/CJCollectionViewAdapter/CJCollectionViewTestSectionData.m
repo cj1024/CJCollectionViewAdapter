@@ -50,6 +50,7 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
 @property(nonatomic, strong, readwrite) CollectionViewTestSectionDataSystemHeaderFooterView *stickyHeaderView;
 @property(nonatomic, strong, readwrite) CollectionViewTestSectionDataSystemHeaderFooterView *stickyFooterView;
 
+@property(nonatomic, assign, readwrite) NSTimeInterval timestamp;
 @property(nonatomic, assign, readwrite) BOOL hideSeparatorHeader;
 @property(nonatomic, assign, readwrite) BOOL hideInnerHeader;
 @property(nonatomic, assign, readwrite) BOOL hideSeparatorFooter;
@@ -94,6 +95,7 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
         _carouselViewHeader = carouselViewHeader;
         _itemsInOneRow = itemsInOneRow;
         _animated = animated;
+        _timestamp = [[NSDate date] timeIntervalSince1970];
     }
     return self;
 }
@@ -449,7 +451,7 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
         reuseableView = [[CJCarouselViewPage alloc] init];
     }
     reuseableView.imageView.contentMode = UIViewContentModeScaleAspectFill;
-    [reuseableView.imageView sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://uploadbeta.com/api/pictures/random/?i=%@", @(index).stringValue]]];
+    [reuseableView.imageView sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://uploadbeta.com/api/pictures/random/?i=%@&t=%lld", @(index).stringValue, (long long)self.timestamp]]];
     return reuseableView;
 }
 

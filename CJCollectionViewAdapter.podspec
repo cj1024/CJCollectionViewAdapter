@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'CJCollectionViewAdapter'
-  s.version          = '0.1.2'
+  s.version          = '0.1.3'
   s.summary          = 'Adapter Help To Make Using UICollectionView Easily.'
   s.description      = <<-DESC
 Bridge UICollectionView DataSource And Delegate Into Each Section Module.
@@ -13,7 +13,7 @@ Provide Each Section A Simple Way To Have A Sticky|Separator|Inner Header|Footer
   s.source           = { :git => 'https://github.com/cj1024/CJCollectionViewAdapter.git', :tag => s.version.to_s }
   s.screenshots      = 'https://ftp.bmp.ovh/imgs/2020/12/a6fc4de3dfcabb6a.png'
 
-  s.ios.deployment_target = '9.0'
+  s.ios.deployment_target = '8.0'
 
   s.subspec 'Core' do |core|
     core.frameworks = 'UIKit'
