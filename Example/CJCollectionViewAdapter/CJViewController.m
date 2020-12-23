@@ -16,6 +16,7 @@
 
 @property(nonatomic, strong, readwrite) UICollectionView *collectionView;
 @property(nonatomic, strong, readwrite) CJCollectionViewAdapter *adapter;
+@property(nonatomic, strong, readwrite) UIVisualEffectView *bottomView;
 
 @end
 
@@ -38,6 +39,8 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     self.view.backgroundColor = [UIColor whiteColor];
+    [self.view addSubview:self.collectionView];
+    [self.view addSubview:self.bottomView];
     self.collectionView.backgroundColor = [UIColor lightGrayColor];
     [self viewControllerReloadData];
 }
@@ -48,9 +51,6 @@
 }
 
 - (void)layoutCollectionView {
-    if (self.collectionView.superview != self.view) {
-        [self.view addSubview:self.collectionView];
-    }
     self.collectionView.frame = self.view.bounds;
     if (@available(iOS 11.0, *)) {
         self.adapter.stickyContentInset = [NSValue valueWithUIEdgeInsets:self.view.safeAreaInsets];
@@ -58,6 +58,9 @@
         UIEdgeInsets insets = self.view.safeAreaInsets;
         insets.bottom += ([self.collectionView.mj_footer isKindOfClass:[UIView class]] ? CGRectGetHeight(self.collectionView.mj_footer.frame) : 0.);
         self.collectionView.contentInset = insets;
+        self.bottomView.frame = CGRectMake(0, self.view.bounds.size.height - self.view.safeAreaInsets.bottom, self.view.bounds.size.width, self.view.safeAreaInsets.bottom);
+    } else {
+        self.bottomView.frame = CGRectZero;
     }
 }
 
@@ -86,6 +89,14 @@
         _adapter = adapter;
     }
     return _adapter;
+}
+
+- (UIVisualEffectView *)bottomView {
+    if (!_bottomView) {
+        UIBlurEffect *effect = [UIBlurEffect effectWithStyle:UIBlurEffectStyleDark];
+        _bottomView = [[UIVisualEffectView alloc] initWithEffect:effect];
+    }
+    return _bottomView;
 }
 
 - (void)viewControllerReloadData {

@@ -6,14 +6,12 @@ target 'CJCollectionViewAdapter_Example' do
   pod 'CJCollectionViewAdapter', :path => '../'
   pod 'CJCollectionViewAdapter/Cell', :path => '../'
   pod 'CJCarouselView'
-  pod 'SDWebImage'
-  pod 'Masonry'
-  pod 'Toast'
-  pod 'MJRefresh'
-  pod 'FLEX'
+  pod 'SDWebImage', :inhibit_warnings => true
+  pod 'Masonry', :inhibit_warnings => true
+  pod 'Toast', :inhibit_warnings => true
+  pod 'MJRefresh', :inhibit_warnings => true
+  pod 'FLEX', :inhibit_warnings => true
   target 'CJCollectionViewAdapter_Tests' do
     inherit! :search_paths
-
-    
   end
 end
