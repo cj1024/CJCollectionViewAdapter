@@ -37,7 +37,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 
 - (void)layoutSubviews {
     [super layoutSubviews];
-    self.contentView.translatesAutoresizingMaskIntoConstraints = NO;
+    self.contentView.frame = self.bounds;
 }
 
 - (void)prepareForReuse {
