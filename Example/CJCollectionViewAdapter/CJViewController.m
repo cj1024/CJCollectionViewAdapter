@@ -127,7 +127,7 @@
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self endLoadMoreData:NO];
         NSUInteger itemsInRow = 1 + (arc4random() % 3);
-        [self.adapter sectionDataAppend:[[CJCollectionViewTestSectionData alloc] initWithCount:itemsInRow * (1 + (arc4random() % 3)) itemsInOneRow:itemsInRow animated:(arc4random() % 2) == 0] animated:YES];
+        [self.adapter sectionDataAppend:[[CJCollectionViewTestSectionData alloc] initWithCount:(itemsInRow * (1 + (arc4random() % 5)) - (arc4random() % itemsInRow)) itemsInOneRow:itemsInRow animated:(arc4random() % 2) == 0] animated:YES];
     });
 }
 

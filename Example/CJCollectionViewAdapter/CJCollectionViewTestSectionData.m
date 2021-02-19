@@ -44,7 +44,6 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
 @property(nonatomic, copy, readonly, nullable) NSArray <UIColor *> *colors;
 @property(nonatomic, strong, readonly, nullable) __kindof UICollectionViewLayoutAttributes *sectionSeparatorHeaderLayoutAttributes;
 @property(nonatomic, strong, readonly, nullable) __kindof UICollectionViewLayoutAttributes *innerHeaderLayoutAttributes;
-@property(nonatomic, copy, readonly, nullable) NSArray *itemsLayoutAttributes;
 @property(nonatomic, strong, readonly, nullable) __kindof UICollectionViewLayoutAttributes *sectionSeparatorFooterLayoutAttributes;
 @property(nonatomic, strong, readonly, nullable) __kindof UICollectionViewLayoutAttributes *innerFooterLayoutAttributes;
 @property(nonatomic, strong, readwrite) CollectionViewTestSectionDataSystemHeaderFooterView *stickyHeaderView;
@@ -55,8 +54,6 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
 @property(nonatomic, assign, readwrite) BOOL hideInnerHeader;
 @property(nonatomic, assign, readwrite) BOOL hideSeparatorFooter;
 @property(nonatomic, assign, readwrite) BOOL hideInnerFooter;
-
-- (nullable CollectionViewTestSectionDataCellLayoutAttributes *)createSectionCellLayoutAttributes:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath;
 
 @end
 
@@ -136,21 +133,40 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
     if ([self hasSectionInnerFooter:collectionView forOriginalSection:originalSection]) {
         _innerFooterLayoutAttributes = [self sectionInnerFooterLayoutAttributes:collectionView originalIndexPath:[NSIndexPath indexPathForItem:[self sectionInnerFooterIndex:collectionView forOriginalSection:originalSection] inSection:originalSection]];
     }
-    NSRange cellRange = [self sectionItemRange:collectionView forOriginalSection:originalSection];
-    NSMutableArray *itemsAttributes = [NSMutableArray arrayWithCapacity:self.count];
-    for (NSUInteger i = 0; i < self.count; i++) {
-        __kindof UICollectionViewLayoutAttributes *attributes = [self createSectionCellLayoutAttributes:collectionView forItem:i originalIndexPath:[NSIndexPath indexPathForItem:cellRange.location + i inSection:originalSection]];
-        if (attributes) {
-            [itemsAttributes addObject:attributes];
-        } else {
-            [itemsAttributes addObject:[NSNull null]];
-        }
-    }
-    _itemsLayoutAttributes = [itemsAttributes copy];
+}
+
+- (BOOL)useGridLayout {
+    return [self safeItemsInOneRow] > 1;
+}
+
+- (UIEdgeInsets)gridInset:(nonnull UICollectionView *)collectionView {
+    return UIEdgeInsetsMake(6, 6, 6, 6);
+}
+
+- (CGSize)gridItemSize:(nonnull UICollectionView *)collectionView {
+    UIEdgeInsets gridInset = [self gridInset:collectionView];
+    CGFloat maxWidth = CGRectGetWidth(collectionView.frame) - self.sectionLeftInset - self.sectionRightInset - gridInset.left - gridInset.right;
+    return CGSizeMake((maxWidth - ([self safeItemsInOneRow] - 1) * 6.) / [self safeItemsInOneRow], [self heightForItem]);
+}
+
+- (CGFloat)gridItemHorizontalGap:(nonnull UICollectionView *)collectionView {
+    return 6.;
+}
+
+- (CGFloat)gridItemVerticalGap:(nonnull UICollectionView *)collectionView {
+    return 6.;
 }
 
 - (CGFloat)sectionTopInset {
     return 20;
+}
+
+- (CGFloat)sectionLeftInset {
+    return 12.f;
+}
+
+- (CGFloat)sectionRightInset {
+    return 12.f;
 }
 
 - (BOOL)hasSectionStickyHeader:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
@@ -272,14 +288,6 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
     return self.animated ? 66.0 : kCJCollectionViewSectionDefaultCellHeight;
 }
 
-- (CGFloat)sectionCellsHeight:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection forItems:(nonnull NSArray <NSNumber *> *)items originalIndexPaths:(nonnull NSArray <NSIndexPath *> *)originalIndexPaths {
-    if (self.safeItemsInOneRow == 1) {
-        return [super sectionCellsHeight:collectionView forOriginalSection:originalSection forItems:items originalIndexPaths:originalIndexPaths];
-    }
-    NSUInteger rows = (self.count % self.safeItemsInOneRow == 0) ? self.count / self.safeItemsInOneRow : ceilf((CGFloat)self.count / (CGFloat)self.safeItemsInOneRow);
-    return [self heightForItem] * rows;
-}
-
 - (CGFloat)sectionCellTopSeparatorHeight:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath {
     return 0.0;
 }
@@ -290,26 +298,6 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
 
 - (CGFloat)sectionCellBottomSeparatorHeight:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath {
     return 10.0;
-}
-
-- (nullable CollectionViewTestSectionDataCellLayoutAttributes *)createSectionCellLayoutAttributes:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath {
-    CollectionViewTestSectionDataCellLayoutAttributes *attributes = [CollectionViewTestSectionDataCellLayoutAttributes layoutAttributesForCellWithIndexPath:originalIndexPath];
-    NSUInteger currentRow = (item % self.safeItemsInOneRow == 0) ? item / self.safeItemsInOneRow : floorf((CGFloat)item / (CGFloat)self.safeItemsInOneRow);
-    attributes.originalFrame = CGRectMake(CGRectGetWidth(collectionView.bounds) * (item % self.safeItemsInOneRow) / self.safeItemsInOneRow, currentRow * [self heightForItem], CGRectGetWidth(collectionView.bounds) / self.safeItemsInOneRow, [self heightForItem]);
-    return attributes;
-}
-
-- (nullable UICollectionViewLayoutAttributes *)sectionCellLayoutAttributes:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath {
-    if (self.safeItemsInOneRow == 1) {
-        return [super sectionCellLayoutAttributes:collectionView forItem:item originalIndexPath:originalIndexPath];
-    }
-    if (item < self.itemsLayoutAttributes.count) {
-        id attributes = self.itemsLayoutAttributes[item];
-        if ([attributes isKindOfClass:[CollectionViewTestSectionDataCellLayoutAttributes class]]) {
-            return attributes;
-        }
-    }
-    return [self createSectionCellLayoutAttributes:collectionView forItem:item originalIndexPath:originalIndexPath];
 }
 
 - (nonnull __kindof UICollectionViewCell *)sectionCell:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath {

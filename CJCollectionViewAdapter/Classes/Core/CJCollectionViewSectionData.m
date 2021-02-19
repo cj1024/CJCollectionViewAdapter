@@ -68,13 +68,25 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
     
 }
 
-@end
-
-@implementation CJCollectionViewSectionData (SectionHeader)
-
 - (CGFloat)sectionTopInset {
     return 0.0;
 }
+
+- (CGFloat)sectionBottomInset {
+    return 0.0;
+}
+
+- (CGFloat)sectionLeftInset {
+    return 0.0;
+}
+
+- (CGFloat)sectionRightInset {
+    return 0.0;
+}
+
+@end
+
+@implementation CJCollectionViewSectionData (SectionHeader)
 
 - (BOOL)hasSectionStickyHeader:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
     return NO;
@@ -160,7 +172,7 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
 
 - (nullable UICollectionViewLayoutAttributes *)sectionInnerHeaderLayoutAttributes:(nonnull UICollectionView *)collectionView originalIndexPath:(nonnull NSIndexPath *)originalIndexPath {
     UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:originalIndexPath];
-    attributes.originalFrame = CGRectMake(0, 0, CGRectGetWidth(collectionView.frame), [self sectionInnerHeaderHeight:collectionView originalIndexPath:originalIndexPath]);
+    attributes.originalFrame = CGRectMake(self.sectionLeftInset, 0, CGRectGetWidth(collectionView.frame) - self.sectionLeftInset - self.sectionRightInset, [self sectionInnerHeaderHeight:collectionView originalIndexPath:originalIndexPath]);
     return attributes;
 }
 
@@ -210,7 +222,7 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
 
 - (nullable UICollectionViewLayoutAttributes *)sectionCellLayoutAttributes:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath {
     UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:originalIndexPath];
-    attributes.originalFrame = CGRectMake(0, item * kCJCollectionViewSectionDefaultCellHeight, CGRectGetWidth(collectionView.frame), kCJCollectionViewSectionDefaultCellHeight);
+    attributes.originalFrame = CGRectMake(self.sectionLeftInset, item * kCJCollectionViewSectionDefaultCellHeight, CGRectGetWidth(collectionView.frame) - self.sectionLeftInset - self.sectionRightInset, kCJCollectionViewSectionDefaultCellHeight);
     return attributes;
 }
 
@@ -249,10 +261,6 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
 @end
 
 @implementation CJCollectionViewSectionData (SectionFooter)
-
-- (CGFloat)sectionBottomInset {
-    return 0.0;
-}
 
 - (BOOL)hasSectionStickyFooter:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
     return NO;
@@ -338,7 +346,7 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
 
 - (nullable UICollectionViewLayoutAttributes *)sectionInnerFooterLayoutAttributes:(nonnull UICollectionView *)collectionView originalIndexPath:(nonnull NSIndexPath *)originalIndexPath {
     UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:originalIndexPath];
-    attributes.originalFrame = CGRectMake(0, 0, CGRectGetWidth(collectionView.frame), [self sectionInnerFooterHeight:collectionView originalIndexPath:originalIndexPath]);
+    attributes.originalFrame = CGRectMake(self.sectionLeftInset, 0, CGRectGetWidth(collectionView.frame) - self.sectionLeftInset - self.sectionRightInset, [self sectionInnerFooterHeight:collectionView originalIndexPath:originalIndexPath]);
     return attributes;
 }
 
@@ -382,6 +390,10 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
 
 @implementation CJCollectionViewFlowLayoutSectionData
 
+- (BOOL)useGridLayout {
+    return NO;
+}
+
 - (CGFloat)sectionCellTopSeparatorHeight:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath {
     return 0.0;
 }
@@ -394,24 +406,68 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
     return kCJCollectionViewSectionDefaultSeparatorHeaderFooterHeight;
 }
 
+- (UIEdgeInsets)gridInset:(nonnull UICollectionView *)collectionView {
+    return UIEdgeInsetsZero;
+}
+
+- (CGSize)gridItemSize:(nonnull UICollectionView *)collectionView {
+    return CGSizeMake(CGRectGetWidth(collectionView.frame) - self.sectionLeftInset - self.sectionRightInset, kCJCollectionViewSectionDefaultCellHeight);
+}
+
+- (CGFloat)gridItemHorizontalGap:(nonnull UICollectionView *)collectionView {
+    return 0;
+}
+
+- (CGFloat)gridItemVerticalGap:(nonnull UICollectionView *)collectionView {
+    return kCJCollectionViewSectionDefaultSeparatorHeaderFooterHeight;
+}
+
 - (void)prepareLayout:(UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
     [super prepareLayout:collectionView forOriginalSection:originalSection];
     NSRange cellRange = [self sectionItemRange:collectionView forOriginalSection:originalSection];
     NSMutableArray *itemsAttributes = [NSMutableArray arrayWithCapacity:cellRange.length];
-    CGFloat offset = 0.0;
-    for (NSUInteger i = 0; i < cellRange.length; i++) {
-        NSIndexPath *indexPath = [NSIndexPath indexPathForItem:cellRange.location + i inSection:originalSection];
-        CGFloat topInset = [self sectionCellTopSeparatorHeight:collectionView forItem:i originalIndexPath:indexPath];
-        CGFloat cellHeight = [self sectionCellHeight:collectionView forItem:i originalIndexPath:indexPath];
-        CGFloat bottomInset = [self sectionCellBottomSeparatorHeight:collectionView forItem:i originalIndexPath:indexPath];
-        offset += topInset;
-        UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:indexPath];
-        attributes.originalFrame = CGRectMake(0, offset, CGRectGetWidth(collectionView.frame), cellHeight);
-        [itemsAttributes addObject:attributes];
-        offset += cellHeight;
-        offset += bottomInset;
+    if (self.useGridLayout) {
+        UIEdgeInsets gridInset = [self gridInset:collectionView];
+        CGSize itemSize = [self gridItemSize:collectionView];
+        CGFloat gapX = [self gridItemHorizontalGap:collectionView];
+        CGFloat gapY = [self gridItemVerticalGap:collectionView];
+        CGFloat offsetX = 0.0;
+        CGFloat maxWidth = CGRectGetWidth(collectionView.frame) - self.sectionLeftInset - self.sectionRightInset - gridInset.left - gridInset.right;
+        CGFloat offsetY = 0.0;
+        NSUInteger xCount = 0;
+        CGFloat totalHeight = 0.0;
+        for (NSUInteger i = 0; i < cellRange.length; i++) {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:cellRange.location + i inSection:originalSection];
+            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:indexPath];
+            if (xCount > 0 && offsetX + itemSize.width > maxWidth) {
+                // 换行
+                offsetX = 0.0;
+                offsetY += (itemSize.height + gapY);
+                xCount = 0;
+            }
+            attributes.originalFrame = CGRectMake(self.sectionLeftInset + gridInset.left + offsetX, gridInset.top + offsetY, itemSize.width, itemSize.height);
+            offsetX += (itemSize.width + gapX);
+            xCount++;
+            totalHeight = MAX(totalHeight ,CGRectGetMaxY(attributes.originalFrame));
+            [itemsAttributes addObject:attributes];
+        }
+        _totalCellHeight = totalHeight + gridInset.bottom;
+    } else {
+        CGFloat offset = 0.0;
+        for (NSUInteger i = 0; i < cellRange.length; i++) {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:cellRange.location + i inSection:originalSection];
+            CGFloat topInset = [self sectionCellTopSeparatorHeight:collectionView forItem:i originalIndexPath:indexPath];
+            CGFloat cellHeight = [self sectionCellHeight:collectionView forItem:i originalIndexPath:indexPath];
+            CGFloat bottomInset = [self sectionCellBottomSeparatorHeight:collectionView forItem:i originalIndexPath:indexPath];
+            offset += topInset;
+            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:indexPath];
+            attributes.originalFrame = CGRectMake(self.sectionLeftInset, offset, CGRectGetWidth(collectionView.frame) - self.sectionLeftInset - self.sectionRightInset, cellHeight);
+            [itemsAttributes addObject:attributes];
+            offset += cellHeight;
+            offset += bottomInset;
+        }
+        _totalCellHeight = offset;
     }
-    _totalCellHeight = offset;
     _preparedCellsLayout = [itemsAttributes copy];
 }
 
