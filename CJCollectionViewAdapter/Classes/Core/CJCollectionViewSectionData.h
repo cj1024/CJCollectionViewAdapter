@@ -33,11 +33,14 @@ extern const CGFloat kCJCollectionViewSectionDefaultCellHeight;
 - (void)prepareData:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection;
 - (void)prepareLayout:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection;
 
+- (CGFloat)sectionTopInset;
+- (CGFloat)sectionBottomInset;
+- (CGFloat)sectionLeftInset; // Sticky|Separator 默认不生效
+- (CGFloat)sectionRightInset; // Sticky|Separator 默认不生效
+
 @end
 
 @interface CJCollectionViewSectionData (SectionHeader)
-
-- (CGFloat)sectionTopInset;
 
 - (BOOL)hasSectionStickyHeader:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection;
 - (nullable UIView *)sectionStickyHeader:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection;
@@ -89,8 +92,6 @@ extern const CGFloat kCJCollectionViewSectionDefaultCellHeight;
 
 @interface CJCollectionViewSectionData (SectionFooter)
 
-- (CGFloat)sectionBottomInset;
-
 - (BOOL)hasSectionStickyFooter:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection;
 - (nullable UIView *)sectionStickyFooter:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection;
 - (CGFloat)sectionStickyFooterHeight:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection;
@@ -128,15 +129,24 @@ extern const CGFloat kCJCollectionViewSectionDefaultCellHeight;
 @end
 
 /**
- *  像 TableView 一样只需提供每行 Cell 的高度，自动计算纵向布局 LayoutAttributes，支持给每一行增加上下边距
+ *  像 TableView 一样只需提供每行 Cell 的高度，自动计算纵向布局 LayoutAttributes，单列布局支持给每一行增加上下边距
  */
 @interface CJCollectionViewFlowLayoutSectionData : CJCollectionViewSectionData
 
 @property(nonatomic, copy, readonly, nullable) NSArray <__kindof UICollectionViewLayoutAttributes *> *preparedCellsLayout;
 @property(nonatomic, assign, readonly) CGFloat totalCellHeight;
 
+- (BOOL)useGridLayout; // 是否启用多列布局
+
+// 单列布局
 - (CGFloat)sectionCellTopSeparatorHeight:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath;
 - (CGFloat)sectionCellHeight:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath;
 - (CGFloat)sectionCellBottomSeparatorHeight:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath;
+
+// 多列布局
+- (UIEdgeInsets)gridInset:(nonnull UICollectionView *)collectionView;
+- (CGSize)gridItemSize:(nonnull UICollectionView *)collectionView;
+- (CGFloat)gridItemHorizontalGap:(nonnull UICollectionView *)collectionView;
+- (CGFloat)gridItemVerticalGap:(nonnull UICollectionView *)collectionView;
 
 @end
