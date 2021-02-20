@@ -1115,6 +1115,53 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     }
 }
 
+- (void)sectionDataReloadAllItems:(nonnull CJCollectionViewSectionData *)sectionData animated:(BOOL)animated {
+    if ([self.internalSections containsObject:sectionData]) {
+        NSInteger section = [self.internalSections indexOfObject:sectionData];
+        NSInteger numberOfItems = [self.bridgedCollectionView numberOfItemsInSection:section];
+        NSInteger oldNumberOfItems = sectionData.sectionWrappedItemsCountRecorder;
+        if (section < self.bridgedCollectionView.numberOfSections && numberOfItems == oldNumberOfItems) {
+            NSRange itemRange = [sectionData sectionItemRange:self.bridgedCollectionView forOriginalSection:section];
+            NSRange oldItemRange = sectionData.sectionItemsRangeRecorder;
+            BOOL needReloadAll = NO;
+            NSMutableArray <NSIndexPath *> *indexesOld = [NSMutableArray <NSIndexPath *> arrayWithCapacity:oldItemRange.length];
+            NSMutableArray <NSIndexPath *> *indexesNew = [NSMutableArray <NSIndexPath *> arrayWithCapacity:itemRange.length];
+            if (oldItemRange.location == itemRange.location) {
+                for (NSUInteger i = 0; i < oldItemRange.length; i++) {
+                    [indexesOld addObject:[NSIndexPath indexPathForItem:(oldItemRange.location + i) inSection:section]];
+                }
+                for (NSUInteger i = 0; i < itemRange.length; i++) {
+                    [indexesNew addObject:[NSIndexPath indexPathForItem:(itemRange.location + i) inSection:section]];
+                }
+            } else {
+                needReloadAll = YES;
+            }
+            if (needReloadAll) {
+                [self prepareLayout];
+                [self performCollectionViewUpdate:^{
+                    [self.bridgedCollectionView reloadData];
+                } withAnimation:animated];
+            } else {
+                [self prepareLayout];
+                [self performCollectionViewUpdate:^{
+                    [self.bridgedCollectionView performBatchUpdates:^{
+                        [self.bridgedCollectionView deleteItemsAtIndexPaths:indexesOld];
+                        [self.bridgedCollectionView insertItemsAtIndexPaths:indexesNew];
+                    } completion:^(BOOL finished) {
+                        
+                    }];
+                } withAnimation:animated];
+            }
+        } else {
+            [self prepareLayout];
+            [self performCollectionViewUpdate:^{
+                [self.bridgedCollectionView reloadData];
+            } withAnimation:animated];
+        }
+        [self sectionItemsChanged:sectionData inCollectionView:self.bridgedCollectionView section:section];
+    }
+}
+
 - (void)sectionDataReloadSeparatorFooter:(nonnull CJCollectionViewSectionData *)sectionData animated:(BOOL)animated {
     if ([self.internalSections containsObject:sectionData]) {
         NSInteger section = [self.internalSections indexOfObject:sectionData];

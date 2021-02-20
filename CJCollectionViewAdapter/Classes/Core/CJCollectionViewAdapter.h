@@ -72,6 +72,7 @@ extern const CGFloat kCJCollectionViewAdapterStickyHeaderFooterZIndex;
 - (void)sectionDataReload:(nonnull CJCollectionViewSectionData *)sectionData items:(nonnull NSArray <NSNumber *> *)items animated:(BOOL)animated;
 - (void)sectionDataInsert:(nonnull CJCollectionViewSectionData *)sectionData items:(nonnull NSArray <NSNumber *> *)items animated:(BOOL)animated;
 - (void)sectionDataDelete:(nonnull CJCollectionViewSectionData *)sectionData items:(nonnull NSArray <NSNumber *> *)items animated:(BOOL)animated;
+- (void)sectionDataReloadAllItems:(nonnull CJCollectionViewSectionData *)sectionData animated:(BOOL)animated;
 - (void)sectionDataReloadSeparatorFooter:(nonnull CJCollectionViewSectionData *)sectionData animated:(BOOL)animated;
 - (void)sectionDataInsertSeparatorFooter:(nonnull CJCollectionViewSectionData *)sectionData animated:(BOOL)animated;
 - (void)sectionDataDeleteSeparatorFooter:(nonnull CJCollectionViewSectionData *)sectionData animated:(BOOL)animated;
