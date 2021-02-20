@@ -18,11 +18,15 @@
 @dynamic sectionTopInsetRecorder;
 @dynamic sectionStickyHeaderHeightRecorder;
 @dynamic sectionSeparatorHeaderIndexRecorder;
+@dynamic sectionSeparatorHeaderHeightRecorder;
 @dynamic sectionInnerHeaderIndexRecorder;
+@dynamic sectionInnerHeaderHeightRecorder;
 @dynamic sectionBottomInsetRecorder;
 @dynamic sectionStickyFooterHeightRecorder;
 @dynamic sectionSeparatorFooterIndexRecorder;
+@dynamic sectionSeparatorFooterHeightRecorder;
 @dynamic sectionInnerFooterIndexRecorder;
+@dynamic sectionInnerFooterHeightRecorder;
 @dynamic cachedLayoutAttributes;
 @dynamic sectionItemsRangeRecorder;
 @dynamic sectionWrappedItemsCountRecorder;
@@ -30,6 +34,8 @@
 @end
 
 @implementation CJCollectionViewSectionData (Private)
+
+@dynamic attachedBackgroundContainer;
 
 - (NSUInteger)collectionViewWrappedItemCount:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
     NSUInteger count = [self sectionItemCount:collectionView forOriginalSection:originalSection];
@@ -52,12 +58,20 @@
     CGFloat height = 0.0;
     NSUInteger index = 0;
     if ([self hasSectionSeparatorHeader:collectionView forOriginalSection:originalSection]) {
-        height += [self sectionSeparatorHeaderHeight:collectionView originalIndexPath:[NSIndexPath indexPathForItem:index inSection:originalSection]];
+        CGFloat h = [self sectionSeparatorHeaderHeight:collectionView originalIndexPath:[NSIndexPath indexPathForItem:index inSection:originalSection]];
+        height += h;
+        self.sectionSeparatorHeaderHeightRecorder = @(h);
         index++;
+    } else {
+        self.sectionSeparatorHeaderHeightRecorder = nil;
     }
     if ([self hasSectionInnerHeader:collectionView forOriginalSection:originalSection]) {
-        height += [self sectionInnerHeaderHeight:collectionView originalIndexPath:[NSIndexPath indexPathForItem:index inSection:originalSection]];
+        CGFloat h = [self sectionInnerHeaderHeight:collectionView originalIndexPath:[NSIndexPath indexPathForItem:index inSection:originalSection]];
+        height += h;
+        self.sectionInnerHeaderHeightRecorder = @(h);
         index++;
+    } else {
+        self.sectionInnerHeaderHeightRecorder = nil;
     }
     NSUInteger itemCount = [self sectionItemCount:collectionView forOriginalSection:originalSection];
     NSMutableArray <NSNumber *> *items = [NSMutableArray <NSNumber *> arrayWithCapacity:itemCount];
@@ -69,12 +83,20 @@
     }
     height += [self sectionCellsHeight:collectionView forOriginalSection:originalSection forItems:items originalIndexPaths:originalIndexPaths];
     if ([self hasSectionInnerFooter:collectionView forOriginalSection:originalSection]) {
-        height += [self sectionInnerFooterHeight:collectionView originalIndexPath:[NSIndexPath indexPathForItem:index inSection:originalSection]];
+        CGFloat h = [self sectionInnerFooterHeight:collectionView originalIndexPath:[NSIndexPath indexPathForItem:index inSection:originalSection]];
+        height += h;
+        self.sectionInnerFooterHeightRecorder = @(h);
         index++;
+    } else {
+        self.sectionInnerFooterHeightRecorder = nil;
     }
     if ([self hasSectionSeparatorFooter:collectionView forOriginalSection:originalSection]) {
-        height += [self sectionSeparatorFooterHeight:collectionView originalIndexPath:[NSIndexPath indexPathForItem:index inSection:originalSection]];
+        CGFloat h = [self sectionSeparatorFooterHeight:collectionView originalIndexPath:[NSIndexPath indexPathForItem:index inSection:originalSection]];
+        height += h;
+        self.sectionSeparatorFooterHeightRecorder = @(h);
         index++;
+    } else {
+        self.sectionSeparatorFooterHeightRecorder = nil;
     }
     return height;
 }

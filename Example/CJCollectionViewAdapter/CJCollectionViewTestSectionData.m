@@ -139,6 +139,28 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
     return [self safeItemsInOneRow] > 1;
 }
 
+- (void)sectionBackground:(nonnull UICollectionView *)collectionView configBackgroundView:(nonnull UICollectionReusableView <ICJCollectionViewSectionBackground> *)backgroundViewContainer forOriginalSection:(NSUInteger)originalSection {
+    UILabel *backgroundView = [[UILabel alloc] init];
+    backgroundView.text = [NSString stringWithFormat:@"Background For Section: %ld", (long)originalSection];
+    backgroundView.textColor = [UIColor colorWithWhite:1 alpha:0.5];
+    backgroundView.backgroundColor = [UIColor colorWithWhite:0 alpha:0.3];
+    backgroundView.textAlignment = NSTextAlignmentCenter;
+    backgroundView.layer.cornerRadius = 8.;
+    backgroundView.layer.masksToBounds = YES;
+    backgroundViewContainer.contentView = backgroundView;
+    backgroundViewContainer.excludeSeparatorHeader = YES;
+    backgroundViewContainer.excludeSeparatorFooter = YES;
+    if (self.useGridLayout) {
+        backgroundViewContainer.excludeInnerHeader = YES;
+        backgroundViewContainer.excludeInnerFooter = YES;
+        backgroundViewContainer.contentViewInset = UIEdgeInsetsMake(0., 12., 0., 12.);
+    } else {
+        backgroundViewContainer.excludeInnerHeader = NO;
+        backgroundViewContainer.excludeInnerFooter = NO;
+        backgroundViewContainer.contentViewInset = UIEdgeInsetsZero;
+    }
+}
+
 - (UIEdgeInsets)gridInset:(nonnull UICollectionView *)collectionView {
     return UIEdgeInsetsMake(6, 6, 6, 6);
 }

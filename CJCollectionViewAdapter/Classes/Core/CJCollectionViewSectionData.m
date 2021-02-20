@@ -27,15 +27,21 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
 @property(nonatomic, assign, readwrite) CGFloat sectionTopInsetRecorder;
 @property(nonatomic, strong, readwrite) NSNumber *sectionStickyHeaderHeightRecorder;
 @property(nonatomic, assign, readwrite) NSInteger sectionSeparatorHeaderIndexRecorder;
+@property(nonatomic, strong, readwrite) NSNumber *sectionSeparatorHeaderHeightRecorder;
 @property(nonatomic, assign, readwrite) NSInteger sectionInnerHeaderIndexRecorder;
+@property(nonatomic, strong, readwrite) NSNumber *sectionInnerHeaderHeightRecorder;
 @property(nonatomic, assign, readwrite) CGFloat sectionBottomInsetRecorder;
 @property(nonatomic, strong, readwrite) NSNumber *sectionStickyFooterHeightRecorder;
 @property(nonatomic, assign, readwrite) NSInteger sectionSeparatorFooterIndexRecorder;
+@property(nonatomic, strong, readwrite) NSNumber *sectionSeparatorFooterHeightRecorder;
 @property(nonatomic, assign, readwrite) NSInteger sectionInnerFooterIndexRecorder;
+@property(nonatomic, strong, readwrite) NSNumber *sectionInnerFooterHeightRecorder;
 @property(nonatomic, assign, readwrite) NSRange sectionItemsRangeRecorder;
 @property(nonatomic, assign, readwrite) NSInteger sectionWrappedItemsCountRecorder;
 
 @property(nonatomic, copy, readwrite, nullable) NSArray <UICollectionViewLayoutAttributes *> *cachedLayoutAttributes;
+
+@property(nonatomic, weak, readwrite, nullable) UICollectionReusableView <ICJCollectionViewSectionBackground> *attachedBackgroundContainer;
 
 @end
 
@@ -375,6 +381,14 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
 }
 
 - (void)sectionInnerFooterDidEndDisplay:(nonnull UICollectionView *)collectionView cell:(nonnull UICollectionViewCell *)cell originalIndexPath:(nonnull NSIndexPath *)originalIndexPath {
+    
+}
+
+@end
+
+@implementation CJCollectionViewSectionData (SectionBackground)
+
+- (void)sectionBackground:(nonnull UICollectionView *)collectionView configBackgroundView:(nonnull UICollectionReusableView <ICJCollectionViewSectionBackground> *)backgroundViewContainer forOriginalSection:(NSUInteger)originalSection {
     
 }
 
