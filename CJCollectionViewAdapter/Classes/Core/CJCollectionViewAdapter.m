@@ -10,12 +10,15 @@
 #import "CJCollectionViewSectionData+Private.h"
 
 const CGFloat kCJCollectionViewAdapterStickyHeaderFooterZIndex = 9999;
+const CGFloat kCJCollectionViewAdapterSectionBackgroundZIndex = -1;
 
 static NSString * const kCJCollectionViewAdapterDefaultCellReuseIndentifer = @"collectionviewadapter.reuseindentifier.cell";
 static NSString * const kCJCollectionViewAdapterStickyHeaderKindKey = @"collectionviewadapter.kind.stickyheader";
 static NSString * const kCJCollectionViewAdapterStickyHeaderReuseIndentifer = @"collectionviewadapter.reuseindentifier.stickyheader";
 static NSString * const kCJCollectionViewAdapterStickyFooterKindKey = @"collectionviewadapter.kind.stickyfooter";
 static NSString * const kCJCollectionViewAdapterStickyFooterReuseIndentifer = @"collectionviewadapter.reuseindentifier.stickyfooter";
+static NSString * const kCJCollectionViewAdapterSectionBackgroundKindKey = @"collectionviewadapter.kind.sectionbackground";
+static NSString * const kCJCollectionViewAdapterSectionBackgroundReuseIndentifer = @"collectionviewadapter.reuseindentifier.sectionbackground";
 static NSString * const kCJCollectionViewAdapterDefaultKindKey = @"collectionviewadapter.kind.default";
 static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"collectionviewadapter.reuseindentifier.default";
 
@@ -51,9 +54,111 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     }
     if ([contentView isKindOfClass:[UIView class]]) {
         [self addSubview:contentView];
-        contentView.frame = self.bounds;
+        [self setNeedsLayout];
     }
     _contentView = contentView;
+}
+
+@end
+
+@interface CJCollectionViewAdapterSectionBackgroundCell : UICollectionReusableView <ICJCollectionViewSectionBackground>
+
+@property(nonatomic, weak, readwrite) CJCollectionViewSectionData *attachedSection;
+@property(nonatomic, strong, readwrite) UIView *contentView;
+@property(nonatomic, assign, readwrite) BOOL excludeSeparatorHeader;
+@property(nonatomic, assign, readwrite) BOOL excludeInnerHeader;
+@property(nonatomic, assign, readwrite) BOOL excludeInnerFooter;
+@property(nonatomic, assign, readwrite) BOOL excludeSeparatorFooter;
+@property(nonatomic, assign, readwrite) UIEdgeInsets contentViewInset;
+
+@end
+
+@implementation CJCollectionViewAdapterSectionBackgroundCell
+
+- (instancetype)initWithFrame:(CGRect)frame {
+    self = [super initWithFrame:frame];
+    if (self) {
+        self.backgroundColor = [UIColor clearColor];
+    }
+    return self;
+}
+
+- (void)layoutSubviews {
+    [super layoutSubviews];
+    CGRect contentFrame = UIEdgeInsetsInsetRect(self.bounds, self.contentViewInset);
+    CGFloat topInset = 0.;
+    if (self.excludeInnerHeader) {
+        topInset = self.attachedSection.sectionSeparatorHeaderHeightRecorder.doubleValue + self.attachedSection.sectionInnerHeaderHeightRecorder.doubleValue;
+    } else if (self.excludeSeparatorHeader) {
+        topInset = self.attachedSection.sectionSeparatorHeaderHeightRecorder.doubleValue;
+    }
+    CGFloat bottomInset = 0.;
+    if (self.excludeInnerFooter) {
+        bottomInset = self.attachedSection.sectionSeparatorFooterHeightRecorder.doubleValue + self.attachedSection.sectionInnerFooterHeightRecorder.doubleValue;
+    } else if (self.excludeSeparatorFooter) {
+        bottomInset = self.attachedSection.sectionSeparatorFooterHeightRecorder.doubleValue;
+    }
+    contentFrame = UIEdgeInsetsInsetRect(contentFrame, UIEdgeInsetsMake(topInset, 0., bottomInset, 0.));
+    self.contentView.frame = contentFrame;
+}
+
+- (void)prepareForReuse {
+    [super prepareForReuse];
+    [self setAttachedSection:nil];
+    [self setExcludeSeparatorHeader:NO];
+    [self setExcludeInnerHeader:NO];
+    [self setExcludeInnerFooter:NO];
+    [self setExcludeSeparatorFooter:NO];
+    [self setContentView:nil];
+    [self setContentViewInset:UIEdgeInsetsZero];
+}
+
+- (void)setAttachedSection:(CJCollectionViewSectionData *)attachedSection {
+    if (_attachedSection) {
+        if (_attachedSection.attachedBackgroundContainer == self) {
+            _attachedSection.attachedBackgroundContainer = nil;
+        }
+    }
+    if (attachedSection) {
+        attachedSection.attachedBackgroundContainer = self;
+    }
+    _attachedSection = attachedSection;
+}
+
+- (void)setContentView:(UIView *)contentView {
+    if ([_contentView isKindOfClass:[UIView class]]) {
+        [_contentView removeFromSuperview];
+    }
+    if ([contentView isKindOfClass:[UIView class]]) {
+        [self addSubview:contentView];
+        [self setNeedsLayout];
+    }
+    _contentView = contentView;
+}
+
+- (void)setExcludeSeparatorHeader:(BOOL)excludeSeparatorHeader {
+    _excludeSeparatorHeader = excludeSeparatorHeader;
+    [self setNeedsLayout];
+}
+
+- (void)setExcludeInnerHeader:(BOOL)excludeInnerHeader {
+    _excludeInnerHeader = excludeInnerHeader;
+    [self setNeedsLayout];
+}
+
+- (void)setExcludeInnerFooter:(BOOL)excludeInnerFooter {
+    _excludeInnerFooter = excludeInnerFooter;
+    [self setNeedsLayout];
+}
+
+- (void)setExcludeSeparatorFooter:(BOOL)excludeSeparatorFooter {
+    _excludeSeparatorFooter = excludeSeparatorFooter;
+    [self setNeedsLayout];
+}
+
+- (void)setContentViewInset:(UIEdgeInsets)contentViewInset {
+    _contentViewInset = contentViewInset;
+    [self setNeedsLayout];
 }
 
 @end
@@ -120,6 +225,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     [bridgedCollectionView registerClass:[UICollectionViewCell class] forCellWithReuseIdentifier:kCJCollectionViewAdapterDefaultCellReuseIndentifer];
     [bridgedCollectionView registerClass:[CJCollectionViewAdapterStickyHeaderFooterCell class] forSupplementaryViewOfKind:kCJCollectionViewAdapterStickyHeaderKindKey withReuseIdentifier:kCJCollectionViewAdapterStickyHeaderReuseIndentifer];
     [bridgedCollectionView registerClass:[CJCollectionViewAdapterStickyHeaderFooterCell class] forSupplementaryViewOfKind:kCJCollectionViewAdapterStickyFooterKindKey withReuseIdentifier:kCJCollectionViewAdapterStickyFooterReuseIndentifer];
+    [bridgedCollectionView registerClass:[CJCollectionViewAdapterSectionBackgroundCell class] forSupplementaryViewOfKind:kCJCollectionViewAdapterSectionBackgroundKindKey withReuseIdentifier:kCJCollectionViewAdapterSectionBackgroundReuseIndentifer];
     [bridgedCollectionView registerClass:[UICollectionReusableView class] forSupplementaryViewOfKind:kCJCollectionViewAdapterDefaultKindKey withReuseIdentifier:kCJCollectionViewAdapterDefaultReuseIndentifer];
 }
 
@@ -194,12 +300,14 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 - (nullable NSArray <__kindof CJCollectionViewSectionData *> *)sectionsInRect:(CGRect)rect {
     __block NSMutableArray <__kindof CJCollectionViewSectionData *> *result = [NSMutableArray <__kindof CJCollectionViewSectionData *> arrayWithCapacity:3];
     [self.internalSections enumerateObjectsUsingBlock:^(__kindof CJCollectionViewSectionData * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
-        CGRect sectionRect = CGRectMake(rect.origin.x, obj.sectionGlobalYOffset - obj.sectionTopInsetRecorder - (obj.sectionStickyHeaderHeightRecorder ? obj.sectionStickyHeaderHeightRecorder.doubleValue : 0.0), rect.size.width, obj.sectionHeightRecorder + obj.sectionTopInsetRecorder + obj.sectionBottomInsetRecorder + (obj.sectionStickyHeaderHeightRecorder ? obj.sectionStickyHeaderHeightRecorder.doubleValue : 0.0) + (obj.sectionStickyFooterHeightRecorder ? obj.sectionStickyFooterHeightRecorder.doubleValue : 0.0));
-        if (CGRectIntersectsRect(rect, sectionRect)) {
-            [result addObject:obj];
-        } else {
-            if (result.count > 0) {
-                *stop = YES;
+        if (idx < self.bridgedCollectionView.numberOfSections) {
+            CGRect sectionRect = CGRectMake(rect.origin.x, obj.sectionGlobalYOffset - obj.sectionTopInsetRecorder - (obj.sectionStickyHeaderHeightRecorder ? obj.sectionStickyHeaderHeightRecorder.doubleValue : 0.0), rect.size.width, obj.sectionHeightRecorder + obj.sectionTopInsetRecorder + obj.sectionBottomInsetRecorder + (obj.sectionStickyHeaderHeightRecorder ? obj.sectionStickyHeaderHeightRecorder.doubleValue : 0.0) + (obj.sectionStickyFooterHeightRecorder ? obj.sectionStickyFooterHeightRecorder.doubleValue : 0.0));
+            if (CGRectIntersectsRect(rect, sectionRect)) {
+                [result addObject:obj];
+            } else {
+                if (result.count > 0) {
+                    *stop = YES;
+                }
             }
         }
     }];
@@ -296,6 +404,11 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                 attributes.frame = CGRectMake(0, data.sectionGlobalYOffset + data.sectionHeightRecorder, CGRectGetWidth(self.bridgedCollectionView.frame), footerHeight); // section 向下滚出
             }
             return attributes;
+        } else if ([elementKind isEqualToString:kCJCollectionViewAdapterSectionBackgroundKindKey]) {
+            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:kCJCollectionViewAdapterSectionBackgroundKindKey withIndexPath:indexPath];
+            attributes.frame = CGRectMake(0, data.sectionGlobalYOffset, CGRectGetWidth(self.bridgedCollectionView.frame), data.sectionHeightRecorder);
+            attributes.zIndex = kCJCollectionViewAdapterSectionBackgroundZIndex + (CGFloat)indexPath.section / (CGFloat)self.safeSectionCount;
+            return attributes;
         }
     }
     return nil;
@@ -327,7 +440,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     }
     __block NSMutableArray <__kindof UICollectionViewLayoutAttributes *> *attributes = [NSMutableArray <__kindof UICollectionViewLayoutAttributes *> array];
     if (section.sectionStickyHeaderHeightRecorder) {
-        UICollectionViewLayoutAttributes *attribute = [self layoutAttributesForSupplementaryViewOfKind:kCJCollectionViewAdapterStickyHeaderKindKey atIndexPath:[NSIndexPath indexPathForItem:-1 inSection:index]];
+        UICollectionViewLayoutAttributes *attribute = [self layoutAttributesForSupplementaryViewOfKind:kCJCollectionViewAdapterStickyHeaderKindKey atIndexPath:[NSIndexPath indexPathForItem:0 inSection:index]];
         if (attribute && ![attributes containsObject:attribute]) {
             [attributes addObject:attribute];
         }
@@ -340,8 +453,14 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
             [attributes addObject:attribute];
         }
     }
+    if (numberOfItems > 0) {
+        UICollectionViewLayoutAttributes *attribute = [self layoutAttributesForSupplementaryViewOfKind:kCJCollectionViewAdapterSectionBackgroundKindKey atIndexPath:[NSIndexPath indexPathForItem:0 inSection:index]];
+        if (attribute && ![attributes containsObject:attribute]) {
+            [attributes addObject:attribute];
+        }
+    }
     if (section.sectionStickyFooterHeightRecorder) {
-        UICollectionViewLayoutAttributes *attribute = [self layoutAttributesForSupplementaryViewOfKind:kCJCollectionViewAdapterStickyFooterKindKey atIndexPath:[NSIndexPath indexPathForItem:numberOfItems inSection:index]];
+        UICollectionViewLayoutAttributes *attribute = [self layoutAttributesForSupplementaryViewOfKind:kCJCollectionViewAdapterStickyFooterKindKey atIndexPath:[NSIndexPath indexPathForItem:0 inSection:index]];
         if (attribute && ![attributes containsObject:attribute]) {
             [attributes addObject:attribute];
         }
@@ -477,6 +596,11 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         } else if ([kind isEqualToString:kCJCollectionViewAdapterStickyFooterKindKey]) {
             CJCollectionViewAdapterStickyHeaderFooterCell *cell = [collectionView dequeueReusableSupplementaryViewOfKind:kCJCollectionViewAdapterStickyFooterKindKey withReuseIdentifier:kCJCollectionViewAdapterStickyFooterReuseIndentifer forIndexPath:indexPath];
             [cell setContentView:[self.internalSections[indexPath.section] sectionStickyFooter:collectionView forOriginalSection:indexPath.section]];
+            return cell;
+        } else if ([kind isEqualToString:kCJCollectionViewAdapterSectionBackgroundKindKey]) {
+            CJCollectionViewAdapterSectionBackgroundCell *cell = [collectionView dequeueReusableSupplementaryViewOfKind:kCJCollectionViewAdapterSectionBackgroundKindKey withReuseIdentifier:kCJCollectionViewAdapterSectionBackgroundReuseIndentifer forIndexPath:indexPath];
+            cell.attachedSection = [self.internalSections objectAtIndex:indexPath.section];
+            [cell.attachedSection sectionBackground:collectionView configBackgroundView:cell forOriginalSection:indexPath.section];
             return cell;
         }
     }
@@ -765,6 +889,10 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 
 @implementation CJCollectionViewAdapter (SectionChildrenUpdate)
 
+- (void)sectionItemsChanged:(nonnull CJCollectionViewSectionData *)sectionData inCollectionView:(nonnull UICollectionView *)collectionView section:(NSUInteger)section {
+    [self updateSectionRecordInfo:sectionData inCollectionView:collectionView section:section];
+}
+
 - (void)updateSectionRecordInfo:(nonnull CJCollectionViewSectionData *)sectionData inCollectionView:(nonnull UICollectionView *)collectionView section:(NSUInteger)section {
     sectionData.sectionSeparatorHeaderIndexRecorder = [sectionData sectionSeparatorHeaderIndex:collectionView forOriginalSection:section];
     sectionData.sectionInnerHeaderIndexRecorder = [sectionData sectionInnerHeaderIndex:collectionView forOriginalSection:section];
@@ -772,6 +900,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     sectionData.sectionInnerFooterIndexRecorder = [sectionData sectionInnerFooterIndex:collectionView forOriginalSection:section];
     sectionData.sectionItemsRangeRecorder = [sectionData sectionItemRange:collectionView forOriginalSection:section];
     sectionData.sectionWrappedItemsCountRecorder = [sectionData collectionViewWrappedItemCount:collectionView forOriginalSection:section];
+//    sectionData.sectionHeightRecorder = [sectionData sectionHeight:self.bridgedCollectionView forOriginalSection:section];
 }
 
 - (void)updateItemWithOldIndex:(NSInteger)oldItem index:(NSInteger)item totalItemsCount:(NSInteger)numberOfItems inSection:(NSInteger)section animated:(BOOL)animated {
@@ -812,7 +941,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
+        [self sectionItemsChanged:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -839,7 +968,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
+        [self sectionItemsChanged:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -892,7 +1021,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
+        [self sectionItemsChanged:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -937,7 +1066,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
+        [self sectionItemsChanged:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -982,7 +1111,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
+        [self sectionItemsChanged:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -1001,7 +1130,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
+        [self sectionItemsChanged:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
@@ -1028,7 +1157,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
                 [self.bridgedCollectionView reloadData];
             } withAnimation:animated];
         }
-        [self updateSectionRecordInfo:sectionData inCollectionView:self.bridgedCollectionView section:section];
+        [self sectionItemsChanged:sectionData inCollectionView:self.bridgedCollectionView section:section];
     }
 }
 
