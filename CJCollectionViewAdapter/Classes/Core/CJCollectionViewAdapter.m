@@ -10,7 +10,7 @@
 #import "CJCollectionViewSectionData+Private.h"
 
 const CGFloat kCJCollectionViewAdapterStickyHeaderFooterZIndex = 9999;
-const CGFloat kCJCollectionViewAdapterSectionBackgroundZIndex = -1;
+const CGFloat kCJCollectionViewAdapterSectionBackgroundZIndex = -1000;
 
 static NSString * const kCJCollectionViewAdapterDefaultCellReuseIndentifer = @"collectionviewadapter.reuseindentifier.cell";
 static NSString * const kCJCollectionViewAdapterStickyHeaderKindKey = @"collectionviewadapter.kind.stickyheader";
