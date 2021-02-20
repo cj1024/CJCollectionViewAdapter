@@ -14,6 +14,18 @@ extern const CGFloat kCJCollectionViewSectionDefaultCellHeight;
 
 @class CJCollectionViewAdapter;
 
+@protocol ICJCollectionViewSectionBackground <NSObject>
+
+@required
+@property(nonatomic, strong, readwrite, null_resettable) UIView *contentView;
+@property(nonatomic, assign, readwrite) BOOL excludeSeparatorHeader;
+@property(nonatomic, assign, readwrite) BOOL excludeInnerHeader;
+@property(nonatomic, assign, readwrite) BOOL excludeInnerFooter;
+@property(nonatomic, assign, readwrite) BOOL excludeSeparatorFooter;
+@property(nonatomic, assign, readwrite) UIEdgeInsets contentViewInset;
+
+@end
+
 /**
  *  顺序从上到下依次为
  *  StickyHeader（类似于TableView中驻留的Header）
@@ -119,6 +131,12 @@ extern const CGFloat kCJCollectionViewSectionDefaultCellHeight;
 - (void)sectionInnerFooterDidDeselected:(nonnull UICollectionView *)collectionView originalIndexPath:(nonnull NSIndexPath *)originalIndexPath;
 - (void)sectionInnerFooterWillDisplay:(nonnull UICollectionView *)collectionView cell:(nonnull UICollectionViewCell *)cell originalIndexPath:(nonnull NSIndexPath *)originalIndexPath;
 - (void)sectionInnerFooterDidEndDisplay:(nonnull UICollectionView *)collectionView cell:(nonnull UICollectionViewCell *)cell originalIndexPath:(nonnull NSIndexPath *)originalIndexPath;
+
+@end
+
+@interface CJCollectionViewSectionData (SectionBackground)
+
+- (void)sectionBackground:(nonnull UICollectionView *)collectionView configBackgroundView:(nonnull UICollectionReusableView <ICJCollectionViewSectionBackground> *)backgroundViewContainer forOriginalSection:(NSUInteger)originalSection;
 
 @end
 
