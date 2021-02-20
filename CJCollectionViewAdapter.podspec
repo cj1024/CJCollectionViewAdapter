@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = 'CJCollectionViewAdapter'
-  s.version          = '0.1.5.1'
+  s.version          = '0.1.5.2'
   s.summary          = 'Adapter Help To Make Using UICollectionView Easily.'
   s.description      = <<-DESC
 Bridge UICollectionView DataSource And Delegate Into Each Section Module.
