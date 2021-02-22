@@ -74,6 +74,15 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
     
 }
 
+- (void)setSectionGlobalYOffset:(CGFloat)sectionGlobalYOffset {
+    BOOL changed = _sectionGlobalYOffset != sectionGlobalYOffset;
+    if (changed) {
+        [self willChangeValueForKey:@"globalOffset"];
+        _sectionGlobalYOffset = sectionGlobalYOffset;
+        [self didChangeValueForKey:@"globalOffset"];
+    }
+}
+
 - (CGFloat)sectionTopInset {
     return 0.0;
 }
