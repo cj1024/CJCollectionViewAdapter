@@ -9,8 +9,7 @@
 #import "CJCollectionViewAdapter.h"
 #import "CJCollectionViewSectionData+Private.h"
 
-const CGFloat kCJCollectionViewAdapterStickyHeaderFooterZIndex = 9999;
-const CGFloat kCJCollectionViewAdapterSectionBackgroundZIndex = -1000;
+const CGFloat kCJCollectionViewAdapterStickyHeaderFooterZIndex = NSIntegerMax;
 
 static NSString * const kCJCollectionViewAdapterDefaultCellReuseIndentifer = @"collectionviewadapter.reuseindentifier.cell";
 static NSString * const kCJCollectionViewAdapterStickyHeaderKindKey = @"collectionviewadapter.kind.stickyheader";
@@ -363,10 +362,23 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 
 - (nullable UICollectionViewLayoutAttributes *)layoutAttributesForItemAtIndexPath:(nonnull NSIndexPath *)indexPath {
     if (indexPath.section < self.safeSectionCount) {
-        __kindof CJCollectionViewSectionData *sectionData = self.internalSections[indexPath.section];
-        UICollectionViewLayoutAttributes *attributes = [sectionData collectionViewWrappedLayoutAttributes:self.bridgedCollectionView forWrappedItem:indexPath.item originalIndexPath:indexPath];
+        __kindof CJCollectionViewSectionData *data = self.internalSections[indexPath.section];
+        UICollectionViewLayoutAttributes *attributes = [data collectionViewWrappedLayoutAttributes:self.bridgedCollectionView forWrappedItem:indexPath.item originalIndexPath:indexPath];
         if ([attributes isKindOfClass:[UICollectionViewLayoutAttributes class]]) {
-            attributes.frame = CGRectOffset(attributes.frame, 0, sectionData.sectionGlobalYOffset);
+            attributes.frame = CGRectOffset(attributes.frame, 0, data.sectionGlobalYOffset);
+            if (data.stickyAllContentAsHeader) {
+                CGFloat offsetTop = self.bridgedCollectionView.contentOffset.y + self.bridgedCollectionView.contentInset.top;
+                CGFloat headerHeight = data.sectionStickyHeaderHeightRecorder.doubleValue;
+                if (offsetTop <= data.sectionGlobalYOffset - headerHeight) {
+                    // 还未到顶，不需要处理
+                } else if (offsetTop <= data.sectionGlobalYOffset + data.sectionHeightRecorder - headerHeight) {
+                    attributes.frame = CGRectOffset(attributes.frame, 0, offsetTop - data.sectionGlobalYOffset + headerHeight); // 吸顶
+                    attributes.zIndex = self.safeSectionCount * -2 + indexPath.section * 2 + 1;
+                } else {
+                    attributes.frame = CGRectOffset(attributes.frame, 0, data.sectionHeightRecorder); // 向上移出
+                    attributes.zIndex = self.safeSectionCount * -2 + indexPath.section * 2 + 1;
+                }
+            }
             return attributes;
         }
     }
@@ -375,7 +387,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 
 - (nullable UICollectionViewLayoutAttributes *)layoutAttributesForSupplementaryViewOfKind:(nonnull NSString *)elementKind atIndexPath:(nonnull NSIndexPath *)indexPath {
     if (indexPath.section < self.safeSectionCount) {
-        CJCollectionViewSectionData *data = self.internalSections[indexPath.section];
+        __kindof CJCollectionViewSectionData *data = self.internalSections[indexPath.section];
         UIEdgeInsets contentInset = [self.stickyContentInset isKindOfClass:[NSValue class]] ? self.stickyContentInset.UIEdgeInsetsValue : self.bridgedCollectionView.contentInset;
         CGFloat offsetTop = self.bridgedCollectionView.contentOffset.y + contentInset.top;
         CGFloat offsetBottom = self.bridgedCollectionView.contentOffset.y + CGRectGetHeight(self.bridgedCollectionView.frame) - contentInset.bottom;
@@ -383,7 +395,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         CGFloat footerHeight = data.sectionStickyFooterHeightRecorder.doubleValue;
         if ([elementKind isEqualToString:kCJCollectionViewAdapterStickyHeaderKindKey]) {
             UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:kCJCollectionViewAdapterStickyHeaderKindKey withIndexPath:indexPath];
-            attributes.zIndex = kCJCollectionViewAdapterStickyHeaderFooterZIndex + (CGFloat)indexPath.section / (CGFloat)self.safeSectionCount;
+            attributes.zIndex = kCJCollectionViewAdapterStickyHeaderFooterZIndex - (self.safeSectionCount - indexPath.section);
             // TODO sticky位置计算需要优化
             if (offsetTop <= data.sectionGlobalYOffset - headerHeight) {
                 attributes.frame = CGRectMake(0, data.sectionGlobalYOffset - headerHeight, CGRectGetWidth(self.bridgedCollectionView.frame), headerHeight); // 还未到顶
@@ -395,7 +407,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
             return attributes;
         } else if ([elementKind isEqualToString:kCJCollectionViewAdapterStickyFooterKindKey]) {
             UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:kCJCollectionViewAdapterStickyFooterKindKey withIndexPath:indexPath];
-            attributes.zIndex = kCJCollectionViewAdapterStickyHeaderFooterZIndex + (CGFloat)indexPath.section / (CGFloat)self.safeSectionCount;
+            attributes.zIndex = kCJCollectionViewAdapterStickyHeaderFooterZIndex - (self.safeSectionCount - indexPath.section);
             if (offsetBottom <= data.sectionGlobalYOffset + footerHeight) {
                 attributes.frame = CGRectMake(0, data.sectionGlobalYOffset, CGRectGetWidth(self.bridgedCollectionView.frame), footerHeight); // 还未到底
             } else if (offsetBottom <= data.sectionGlobalYOffset + data.sectionHeightRecorder + footerHeight) {
@@ -407,7 +419,17 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         } else if ([elementKind isEqualToString:kCJCollectionViewAdapterSectionBackgroundKindKey]) {
             UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:kCJCollectionViewAdapterSectionBackgroundKindKey withIndexPath:indexPath];
             attributes.frame = CGRectMake(0, data.sectionGlobalYOffset, CGRectGetWidth(self.bridgedCollectionView.frame), data.sectionHeightRecorder);
-            attributes.zIndex = kCJCollectionViewAdapterSectionBackgroundZIndex + (CGFloat)indexPath.section / (CGFloat)self.safeSectionCount;
+            if (data.stickyAllContentAsHeader) {
+                CGFloat offsetTop = self.bridgedCollectionView.contentOffset.y + self.bridgedCollectionView.contentInset.top;
+                if (offsetTop <= data.sectionGlobalYOffset - headerHeight) {
+                    // 还未到顶，不需要处理
+                } else if (offsetTop <= data.sectionGlobalYOffset + data.sectionHeightRecorder - headerHeight) {
+                    attributes.frame = CGRectOffset(attributes.frame, 0, offsetTop - data.sectionGlobalYOffset + headerHeight); // 吸顶
+                } else {
+                    attributes.frame = CGRectOffset(attributes.frame, 0, data.sectionHeightRecorder); // 向上移出
+                }
+            }
+            attributes.zIndex = self.safeSectionCount * -2 + indexPath.section * 2;
             return attributes;
         }
     }
@@ -421,7 +443,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         NSArray <__kindof CJCollectionViewSectionData *> *sectionsInRect = [self sectionsInRect:newBounds];
         [sectionsInRect enumerateObjectsUsingBlock:^(__kindof CJCollectionViewSectionData * _Nonnull obj, NSUInteger idx, BOOL * _Nonnull stop) {
             NSUInteger index = [self.internalSections indexOfObject:obj];
-            result = result || [obj hasSectionStickyHeader:self.bridgedCollectionView forOriginalSection:index] || [obj hasSectionStickyFooter:self.bridgedCollectionView forOriginalSection:index] || [obj collectionView:self.bridgedCollectionView shouldInvalidateLayoutForWrappedBoundsChange:CGRectOffset(newBounds, 0, -obj.sectionGlobalYOffset) originalNewBounds:newBounds forOriginalSection:index];
+            result = result || obj.stickyAllContentAsHeader || [obj hasSectionStickyHeader:self.bridgedCollectionView forOriginalSection:index] || [obj hasSectionStickyFooter:self.bridgedCollectionView forOriginalSection:index] || [obj collectionView:self.bridgedCollectionView shouldInvalidateLayoutForWrappedBoundsChange:CGRectOffset(newBounds, 0, -obj.sectionGlobalYOffset) originalNewBounds:newBounds forOriginalSection:index];
             if (result) {
                 *stop = YES;
             }
@@ -900,7 +922,6 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
     sectionData.sectionInnerFooterIndexRecorder = [sectionData sectionInnerFooterIndex:collectionView forOriginalSection:section];
     sectionData.sectionItemsRangeRecorder = [sectionData sectionItemRange:collectionView forOriginalSection:section];
     sectionData.sectionWrappedItemsCountRecorder = [sectionData collectionViewWrappedItemCount:collectionView forOriginalSection:section];
-//    sectionData.sectionHeightRecorder = [sectionData sectionHeight:self.bridgedCollectionView forOriginalSection:section];
 }
 
 - (void)updateItemWithOldIndex:(NSInteger)oldItem index:(NSInteger)item totalItemsCount:(NSInteger)numberOfItems inSection:(NSInteger)section animated:(BOOL)animated {
