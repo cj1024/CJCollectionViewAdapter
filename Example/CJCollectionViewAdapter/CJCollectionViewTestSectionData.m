@@ -93,6 +93,7 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
         _itemsInOneRow = itemsInOneRow;
         _animated = animated;
         _timestamp = [[NSDate date] timeIntervalSince1970];
+        self.stickyAllContentAsHeader = YES;
     }
     return self;
 }

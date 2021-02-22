@@ -50,6 +50,8 @@ extern const CGFloat kCJCollectionViewSectionDefaultCellHeight;
 - (CGFloat)sectionLeftInset; // Sticky|Separator 默认不生效
 - (CGFloat)sectionRightInset; // Sticky|Separator 默认不生效
 
+@property(nonatomic, assign, readwrite) BOOL stickyAllContentAsHeader;
+
 @end
 
 @interface CJCollectionViewSectionData (SectionHeader)
