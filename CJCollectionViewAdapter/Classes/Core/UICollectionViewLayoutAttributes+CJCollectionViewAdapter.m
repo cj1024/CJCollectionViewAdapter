@@ -25,4 +25,17 @@ static NSString * const kUICollectionViewLayoutAttributesOriginalFrameKey = @"co
     objc_setAssociatedObject(self, (__bridge const void *)(kUICollectionViewLayoutAttributesOriginalFrameKey), [NSValue valueWithCGRect:originalFrame], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
+static NSString * const kUICollectionViewLayoutAttributesOriginalFrameForScrollKey = @"collectionviewadapter.layoutattributes.originalinfo.frame.scroll";
+
+@dynamic originalFrameForScroll;
+
+- (CGRect)originalFrameForScroll {
+    NSValue *value = objc_getAssociatedObject(self, (__bridge const void *)(kUICollectionViewLayoutAttributesOriginalFrameForScrollKey));
+    return [value isKindOfClass:[NSValue class]] ? [value CGRectValue] : self.frame;
+}
+
+- (void)setOriginalFrameForScroll:(CGRect)originalFrameForScroll {
+    objc_setAssociatedObject(self, (__bridge const void *)(kUICollectionViewLayoutAttributesOriginalFrameForScrollKey), [NSValue valueWithCGRect:originalFrameForScroll], OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+}
+
 @end

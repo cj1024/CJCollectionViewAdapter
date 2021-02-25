@@ -367,6 +367,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
         if ([attributes isKindOfClass:[UICollectionViewLayoutAttributes class]]) {
             attributes.frame = CGRectOffset(attributes.frame, 0, data.sectionGlobalYOffset);
             if (data.stickyAllContentAsHeader) {
+                attributes.originalFrameForScroll = attributes.frame;
                 CGFloat offsetTop = self.bridgedCollectionView.contentOffset.y + self.bridgedCollectionView.contentInset.top;
                 CGFloat headerHeight = data.sectionStickyHeaderHeightRecorder.doubleValue;
                 if (offsetTop <= data.sectionGlobalYOffset - headerHeight) {
@@ -420,6 +421,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
             UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForSupplementaryViewOfKind:kCJCollectionViewAdapterSectionBackgroundKindKey withIndexPath:indexPath];
             attributes.frame = CGRectMake(0, data.sectionGlobalYOffset, CGRectGetWidth(self.bridgedCollectionView.frame), data.sectionHeightRecorder);
             if (data.stickyAllContentAsHeader) {
+                attributes.originalFrameForScroll = attributes.frame;
                 CGFloat offsetTop = self.bridgedCollectionView.contentOffset.y + self.bridgedCollectionView.contentInset.top;
                 if (offsetTop <= data.sectionGlobalYOffset - headerHeight) {
                     // 还未到顶，不需要处理
