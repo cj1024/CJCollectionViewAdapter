@@ -12,4 +12,6 @@
 
 @property(nonatomic, assign, readwrite) CGRect originalFrame;
 
+@property(nonatomic, assign, readwrite) CGRect originalFrameForScroll;
+
 @end
