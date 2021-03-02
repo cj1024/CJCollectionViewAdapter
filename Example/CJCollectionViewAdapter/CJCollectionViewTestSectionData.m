@@ -193,7 +193,7 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
 }
 
 - (BOOL)hasSectionStickyHeader:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
-    return YES;
+    return NO;
 }
 
 - (nullable UIView *)sectionStickyHeader:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
@@ -206,7 +206,7 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
 }
 
 - (BOOL)hasSectionStickyFooter:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
-    return YES;
+    return NO;
 }
 
 - (nullable UIView *)sectionStickyFooter:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
@@ -462,7 +462,7 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
         reuseableView = [[CJCarouselViewPage alloc] init];
     }
     reuseableView.imageView.contentMode = UIViewContentModeScaleAspectFill;
-    [reuseableView.imageView sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://uploadbeta.com/api/pictures/random/?i=%@&t=%lld", @(index).stringValue, (long long)self.timestamp]]];
+    [reuseableView.imageView sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://bing.ioliu.cn/v1/rand/?w=800&h=600&i=%@&t=%lld", @(index).stringValue, (long long)self.timestamp]]];
     return reuseableView;
 }
 
