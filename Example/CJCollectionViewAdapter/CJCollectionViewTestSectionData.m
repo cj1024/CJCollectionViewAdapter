@@ -93,7 +93,6 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
         _itemsInOneRow = itemsInOneRow;
         _animated = animated;
         _timestamp = [[NSDate date] timeIntervalSince1970];
-        self.stickyAllContentAsHeader = YES;
     }
     return self;
 }
@@ -193,7 +192,7 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
 }
 
 - (BOOL)hasSectionStickyHeader:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
-    return NO;
+    return YES;
 }
 
 - (nullable UIView *)sectionStickyHeader:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
@@ -206,7 +205,7 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
 }
 
 - (BOOL)hasSectionStickyFooter:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
-    return NO;
+    return YES;
 }
 
 - (nullable UIView *)sectionStickyFooter:(nonnull UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
