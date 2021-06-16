@@ -9,7 +9,7 @@
 #import "CJCollectionViewAdapter.h"
 #import "CJCollectionViewSectionData+Private.h"
 
-const CGFloat kCJCollectionViewAdapterStickyHeaderFooterZIndex = NSIntegerMax;
+const CGFloat kCJCollectionViewAdapterStickyHeaderFooterZIndex = INT32_MAX;
 
 static NSString * const kCJCollectionViewAdapterDefaultCellReuseIndentifer = @"collectionviewadapter.reuseindentifier.cell";
 static NSString * const kCJCollectionViewAdapterStickyHeaderKindKey = @"collectionviewadapter.kind.stickyheader";
