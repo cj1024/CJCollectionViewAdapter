@@ -148,6 +148,26 @@ extern const CGFloat kCJCollectionViewSectionDefaultCellHeight;
 
 @end
 
+typedef NS_ENUM(NSUInteger, CJCollectionViewFlowLayoutType) {
+    CJCollectionViewFlowLayoutTypeNormal,
+    CJCollectionViewFlowLayoutTypeGrid,
+    CJCollectionViewFlowLayoutTypeFlex
+};
+
+typedef NS_ENUM(NSUInteger, CJCollectionViewFlowLayoutFlexAlignItems) {
+    CJCollectionViewFlowLayoutFlexAlignItemsTop,        // 顶对齐
+    CJCollectionViewFlowLayoutFlexAlignItemsCenter,     // 居中对齐
+    CJCollectionViewFlowLayoutFlexAlignItemsBottom,     // 底对齐
+    CJCollectionViewFlowLayoutFlexAlignItemsStretch     // 拉伸高度为行高
+};
+
+typedef NS_ENUM(NSUInteger, CJCollectionViewFlowLayoutFlexAlignContent) {
+    CJCollectionViewFlowLayoutFlexAlignContentLeft,         // 保持 item gap，靠左
+    CJCollectionViewFlowLayoutFlexAlignContentCenter,       // 保持 item gap，居中
+    CJCollectionViewFlowLayoutFlexAlignContentRight,        // 保持 item gap，靠右
+    CJCollectionViewFlowLayoutFlexAlignContentStretchGap    // 拉伸 item gap 直到填满一行
+};
+
 /**
  *  像 TableView 一样只需提供每行 Cell 的高度，自动计算纵向布局 LayoutAttributes，单列布局支持给每一行增加上下边距
  */
@@ -156,17 +176,25 @@ extern const CGFloat kCJCollectionViewSectionDefaultCellHeight;
 @property(nonatomic, copy, readonly, nullable) NSArray <__kindof UICollectionViewLayoutAttributes *> *preparedCellsLayout;
 @property(nonatomic, assign, readonly) CGFloat totalCellHeight;
 
-- (BOOL)useGridLayout; // 是否启用多列布局
+- (CJCollectionViewFlowLayoutType)layoutType; // 是否启用多列布局
 
 // 单列布局
 - (CGFloat)sectionCellTopSeparatorHeight:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath;
 - (CGFloat)sectionCellHeight:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath;
 - (CGFloat)sectionCellBottomSeparatorHeight:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath;
 
-// 多列布局
+// 等分的Grid布局
 - (UIEdgeInsets)gridInset:(nonnull UICollectionView *)collectionView;
 - (CGSize)gridItemSize:(nonnull UICollectionView *)collectionView;
 - (CGFloat)gridItemHorizontalGap:(nonnull UICollectionView *)collectionView;
 - (CGFloat)gridItemVerticalGap:(nonnull UICollectionView *)collectionView;
+
+// FLex布局
+- (UIEdgeInsets)flexInset:(nonnull UICollectionView *)collectionView;
+- (CGSize)flexItemSize:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item; // 每一行的高度以最大高度计算
+- (CGFloat)flexItemGap:(nonnull UICollectionView *)collectionView;
+- (CJCollectionViewFlowLayoutFlexAlignItems)flexItemAlign:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item; // item 在行中的垂直对齐方式
+- (CGFloat)flexRowGap:(nonnull UICollectionView *)collectionView;
+- (CJCollectionViewFlowLayoutFlexAlignContent)flexContentAlign:(nonnull UICollectionView *)collectionView; // 一行宽度可能小于最大宽度，此时 item 在行中的水平布局方式
 
 @end

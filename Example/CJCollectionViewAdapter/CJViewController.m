@@ -104,6 +104,7 @@
                                     [[CJCollectionViewTestSectionData alloc] initWithCount:2 carouselViewHeader:YES itemsInOneRow:1 animated:NO],
                                     [[CJCollectionViewTestSectionData alloc] initWithCount:3 carouselViewHeader:YES itemsInOneRow:1 animated:NO],
                                     [[CJCollectionViewTestSectionData alloc] initWithCount:4 carouselViewHeader:YES itemsInOneRow:1 animated:NO],
+                                    [[CJCollectionViewTestSectionData alloc] initWithCount:18 itemsInOneRow:3 animated:YES],
                                     [[CJCollectionViewTestSectionData alloc] initWithCount:4 itemsInOneRow:2 animated:YES],
                                     [[CJCollectionViewTestSectionData alloc] initWithCount:6 itemsInOneRow:2 animated:NO],
                                     [[CJCollectionViewTestSectionData alloc] initWithCount:9 itemsInOneRow:1 animated:YES],
@@ -127,7 +128,7 @@
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(2.0 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         [self endLoadMoreData:NO];
         NSUInteger itemsInRow = 1 + (arc4random() % 3);
-        [self.adapter sectionDataAppend:[[CJCollectionViewTestSectionData alloc] initWithCount:(itemsInRow * (1 + (arc4random() % 5)) - (arc4random() % itemsInRow)) itemsInOneRow:itemsInRow animated:(arc4random() % 2) == 0] animated:YES];
+        [self.adapter sectionDataAppend:[[CJCollectionViewTestSectionData alloc] initWithCount:(itemsInRow * (1 + (arc4random() % 10)) - (arc4random() % itemsInRow)) itemsInOneRow:itemsInRow animated:(arc4random() % 2) == 0] animated:YES];
     });
 }
 

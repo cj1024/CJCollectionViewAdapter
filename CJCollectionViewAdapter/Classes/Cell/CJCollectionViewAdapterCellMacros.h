@@ -6,8 +6,8 @@
 //  Copyright © 2020 cj1024. All rights reserved.
 //
 
-#ifndef BainuoUIControlMacros_h
-#define BainuoUIControlMacros_h
+#ifndef CJCollectionViewAdapterMacros_h
+#define CJCollectionViewAdapterMacros_h
 
 #import <UIKit/UIKit.h>
 
@@ -35,4 +35,4 @@ UIKIT_STATIC_INLINE CJCollectionViewAdapterCellAlignment CJCollectionViewAdapter
     return alignment;
 }
 
-#endif /* BainuoUIControlMacros_h */
+#endif /* CJCollectionViewAdapterMacros_h */

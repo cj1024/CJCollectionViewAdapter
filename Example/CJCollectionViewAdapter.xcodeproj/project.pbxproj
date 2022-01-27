@@ -518,9 +518,11 @@
 			baseConfigurationReference = 00810A4686732C5410D6DE3E /* Pods-CJCollectionViewAdapter_Example.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 0.2.0.0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "CJCollectionViewAdapter/CJCollectionViewAdapter-Prefix.pch";
 				INFOPLIST_FILE = "CJCollectionViewAdapter/CJCollectionViewAdapter-Info.plist";
+				MARKETING_VERSION = 0.2.0;
 				MODULE_NAME = ExampleApp;
 				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.demo.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -534,9 +536,11 @@
 			baseConfigurationReference = C8E14CD3E1D7175C81946D36 /* Pods-CJCollectionViewAdapter_Example.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CURRENT_PROJECT_VERSION = 0.2.0.0;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "CJCollectionViewAdapter/CJCollectionViewAdapter-Prefix.pch";
 				INFOPLIST_FILE = "CJCollectionViewAdapter/CJCollectionViewAdapter-Info.plist";
+				MARKETING_VERSION = 0.2.0;
 				MODULE_NAME = ExampleApp;
 				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.demo.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
