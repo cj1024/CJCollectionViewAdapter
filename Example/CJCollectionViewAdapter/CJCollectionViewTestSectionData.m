@@ -135,8 +135,15 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
     }
 }
 
-- (BOOL)useGridLayout {
-    return [self safeItemsInOneRow] > 1;
+- (CJCollectionViewFlowLayoutType)layoutType {
+    if ([self safeItemsInOneRow] > 1) {
+        if (self.colors.count > 10) {
+            return CJCollectionViewFlowLayoutTypeFlex;
+        } else {
+            return CJCollectionViewFlowLayoutTypeGrid;
+        }
+    }
+    return CJCollectionViewFlowLayoutTypeNormal;
 }
 
 - (void)sectionBackground:(nonnull UICollectionView *)collectionView configBackgroundView:(nonnull UICollectionReusableView <ICJCollectionViewSectionBackground> *)backgroundViewContainer forOriginalSection:(NSUInteger)originalSection {
@@ -150,14 +157,21 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
     backgroundViewContainer.contentView = backgroundView;
     backgroundViewContainer.excludeSeparatorHeader = YES;
     backgroundViewContainer.excludeSeparatorFooter = YES;
-    if (self.useGridLayout) {
-        backgroundViewContainer.excludeInnerHeader = YES;
-        backgroundViewContainer.excludeInnerFooter = YES;
-        backgroundViewContainer.contentViewInset = UIEdgeInsetsMake(0., 12., 0., 12.);
-    } else {
-        backgroundViewContainer.excludeInnerHeader = NO;
-        backgroundViewContainer.excludeInnerFooter = NO;
-        backgroundViewContainer.contentViewInset = UIEdgeInsetsZero;
+    switch (self.layoutType) {
+        case CJCollectionViewFlowLayoutTypeGrid:
+        case CJCollectionViewFlowLayoutTypeFlex: {
+            backgroundViewContainer.excludeInnerHeader = YES;
+            backgroundViewContainer.excludeInnerFooter = YES;
+            backgroundViewContainer.contentViewInset = UIEdgeInsetsMake(0., 12., 0., 12.);
+        }
+            break;
+        case CJCollectionViewFlowLayoutTypeNormal:
+        default: {
+            backgroundViewContainer.excludeInnerHeader = NO;
+            backgroundViewContainer.excludeInnerFooter = NO;
+            backgroundViewContainer.contentViewInset = UIEdgeInsetsZero;
+        }
+            break;
     }
 }
 
@@ -177,6 +191,37 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
 
 - (CGFloat)gridItemVerticalGap:(nonnull UICollectionView *)collectionView {
     return 6.;
+}
+
+- (UIEdgeInsets)flexInset:(nonnull UICollectionView *)collectionView {
+    return UIEdgeInsetsMake(6, 6, 6, 6);
+}
+
+- (CGSize)flexItemSize:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item {
+    UIEdgeInsets flexInset = [self flexInset:collectionView];
+    CGFloat maxWidth = CGRectGetWidth(collectionView.frame) - self.sectionLeftInset - self.sectionRightInset - flexInset.left - flexInset.right;
+    UIColor *color = self.colors[item];
+    CGFloat red, green, blue, alpha;
+    [color getRed:&red green:&green blue:&blue alpha:&alpha];
+    CGFloat itemWidthBasic = (maxWidth - ([self safeItemsInOneRow] - 1) * 6.) / [self safeItemsInOneRow];
+    CGFloat itemHeightBasic = [self heightForItem];
+    return CGSizeMake(ceil(itemWidthBasic * (red + 0.3 )), ceil(itemHeightBasic * (green + 0.5)));
+}
+
+- (CGFloat)flexItemGap:(nonnull UICollectionView *)collectionView {
+    return 6.;
+}
+
+- (CJCollectionViewFlowLayoutFlexAlignItems)flexItemAlign:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item {
+    return CJCollectionViewFlowLayoutFlexAlignItemsCenter;
+}
+
+- (CGFloat)flexRowGap:(nonnull UICollectionView *)collectionView {
+    return 6.;
+}
+
+- (CJCollectionViewFlowLayoutFlexAlignContent)flexContentAlign:(UICollectionView *)collectionView {
+    return CJCollectionViewFlowLayoutFlexAlignContentCenter;
 }
 
 - (CGFloat)sectionTopInset {

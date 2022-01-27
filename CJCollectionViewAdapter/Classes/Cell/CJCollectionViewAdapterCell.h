@@ -23,6 +23,7 @@
 @property(nonatomic, assign, readwrite) BOOL showRightArrow; // 默认NO
 @property(nonatomic, strong, readwrite, nullable) UIImage *rightArrowImage;
 @property(nonatomic, assign, readwrite) CJCollectionViewAdapterCellAlignment rightArrowAlignment; // 默认CJCollectionViewAdapterCellAlignmentMake(eCJCollectionViewAdapterCellHorizontalAlignmentRight, eCJCollectionViewAdapterCellVerticalAlignmentCenter)
+@property(nonatomic, assign, readwrite) CGSize rightArrowSize; // 默认CGPointMake(0.0, 0.0)，将读取图片本身的信息
 @property(nonatomic, assign, readwrite) CGPoint rightArrowOffset; // 默认CGPointMake(-15.0, 0.0)
 @property(nonatomic, assign, readwrite) BOOL showSummaryLabel; // 认YES
 @property(nonatomic, assign, readwrite) UIEdgeInsets summaryLabelInset; // 默认UIEdgeInsetsMake(0, 15.0, 0, 15.0)

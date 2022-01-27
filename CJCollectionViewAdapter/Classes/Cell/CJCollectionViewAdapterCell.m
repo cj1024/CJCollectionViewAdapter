@@ -216,6 +216,7 @@ static const CGFloat kCJCollectionViewAdapterBaseCellDefaultHorizontalInset = 15
     if (_rightArrowView == nil) {
         UIImageView *aView = [[CJCollectionViewAdapterCellImageView alloc] init];
         aView.backgroundColor = [UIColor clearColor];
+        aView.contentMode = UIViewContentModeScaleToFill;
         aView.hidden = !self.showRightArrow;
         aView.layer.zPosition = 1;
         _rightArrowView = aView;
@@ -277,6 +278,11 @@ static const CGFloat kCJCollectionViewAdapterBaseCellDefaultHorizontalInset = 15
     [self setNeedsLayout];
 }
 
+- (void)setShowSummaryLabel:(BOOL)showSummaryLabel {
+    _showSummaryLabel = showSummaryLabel;
+    self.summaryLabel.hidden = !showSummaryLabel;
+}
+
 - (void)setShowRightArrow:(BOOL)showRightArrow {
     _showRightArrow = showRightArrow;
     self.rightArrowView.hidden = !showRightArrow;
@@ -285,6 +291,11 @@ static const CGFloat kCJCollectionViewAdapterBaseCellDefaultHorizontalInset = 15
 - (void)setRightArrowImage:(UIImage *)rightArrowImage {
     _rightArrowImage = rightArrowImage;
     self.rightArrowView.image = rightArrowImage;
+    [self setNeedsLayout];
+}
+
+- (void)setRightArrowSize:(CGSize)rightArrowSize {
+    _rightArrowSize = rightArrowSize;
     [self setNeedsLayout];
 }
 
@@ -402,6 +413,9 @@ static const CGFloat kCJCollectionViewAdapterBaseCellDefaultHorizontalInset = 15
 - (CGRect)desiredRightArrowViewFrame {
     CGFloat rightArrowViewX = 0.0, rightArrowViewY = 0.0;
     CGSize rightImageSize = self.rightArrowView.image ? self.rightArrowView.image.size : CGSizeZero;
+    if (!CGSizeEqualToSize(CGSizeZero, self.rightArrowSize)) {
+        rightImageSize = self.rightArrowSize;
+    }
     switch (self.rightArrowAlignment.horizontalAlignment) {
         case CJCollectionViewAdapterCellHorizontalAlignmentLeft:
             rightArrowViewX = 0.0;

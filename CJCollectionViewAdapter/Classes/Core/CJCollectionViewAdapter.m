@@ -103,6 +103,7 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 
 - (void)prepareForReuse {
     [super prepareForReuse];
+    self.backgroundColor = [UIColor clearColor];
     [self setAttachedSection:nil];
     [self setExcludeSeparatorHeader:NO];
     [self setExcludeInnerHeader:NO];
