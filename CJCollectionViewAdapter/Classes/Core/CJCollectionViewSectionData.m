@@ -414,7 +414,15 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
 @implementation CJCollectionViewFlowLayoutSectionData
 
 - (BOOL)useGridLayout {
-    return NO;
+    return [self layoutType] == CJCollectionViewFlowLayoutTypeGrid;
+}
+
+- (BOOL)useFlexLayout {
+    return [self layoutType] == CJCollectionViewFlowLayoutTypeFlex;
+}
+
+- (CJCollectionViewFlowLayoutType)layoutType {
+    return CJCollectionViewFlowLayoutTypeNormal;
 }
 
 - (CGFloat)sectionCellTopSeparatorHeight:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item originalIndexPath:(nonnull NSIndexPath *)originalIndexPath {
@@ -445,6 +453,107 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
     return kCJCollectionViewSectionDefaultSeparatorHeaderFooterHeight;
 }
 
+- (UIEdgeInsets)flexInset:(nonnull UICollectionView *)collectionView {
+    return UIEdgeInsetsZero;
+}
+
+- (CGSize)flexItemSize:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item {
+    return CGSizeMake(CGRectGetWidth(collectionView.frame) - self.sectionLeftInset - self.sectionRightInset, kCJCollectionViewSectionDefaultCellHeight);
+}
+
+- (CGFloat)flexItemGap:(nonnull UICollectionView *)collectionView {
+    return 0;
+}
+
+- (CJCollectionViewFlowLayoutFlexAlignItems)flexItemAlign:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item {
+    return CJCollectionViewFlowLayoutFlexAlignItemsTop;
+}
+
+- (CGFloat)flexRowGap:(nonnull UICollectionView *)collectionView {
+    return kCJCollectionViewSectionDefaultSeparatorHeaderFooterHeight;
+}
+
+- (CJCollectionViewFlowLayoutFlexAlignContent)flexContentAlign:(UICollectionView *)collectionView {
+    return CJCollectionViewFlowLayoutFlexAlignContentLeft;
+}
+
+- (void)adjustFlexRowLayout:(NSArray <UICollectionViewLayoutAttributes *> *)rowLayouts
+             collectionView:(UICollectionView *)collectionView
+                  cellRange:(NSRange)cellRange
+                maxRowWidth:(CGFloat)maxRowWidth
+                   rowWidth:(CGFloat)rowWidth
+                  rowHeight:(CGFloat)rowHeight {
+    if (rowLayouts.count == 0) {
+        return;
+    }
+    // 换行
+    if (rowLayouts.count > 1) {
+        // 超过一个，重新计算纵向布局
+        for (UICollectionViewLayoutAttributes *itemLayout in rowLayouts) {
+            NSUInteger item = itemLayout.indexPath.item - cellRange.location;
+            CJCollectionViewFlowLayoutFlexAlignItems align = [self flexItemAlign:collectionView forItem:item];
+            switch (align) {
+                case CJCollectionViewFlowLayoutFlexAlignItemsCenter: {
+                    itemLayout.originalFrame = CGRectOffset(itemLayout.originalFrame, 0., (rowHeight - itemLayout.originalFrame.size.height) / 2.);
+                }
+                    break;
+                    
+                case CJCollectionViewFlowLayoutFlexAlignItemsBottom: {
+                    itemLayout.originalFrame = CGRectOffset(itemLayout.originalFrame, 0., (rowHeight - itemLayout.originalFrame.size.height));
+                }
+                    break;
+                case CJCollectionViewFlowLayoutFlexAlignItemsStretch: {
+                    itemLayout.originalFrame = CGRectMake(itemLayout.originalFrame.origin.x, itemLayout.originalFrame.origin.y, itemLayout.originalFrame.size.width, rowHeight);
+                }
+                    break;
+                case CJCollectionViewFlowLayoutFlexAlignItemsTop:
+                default: {
+                    // 不用动
+                }
+                    break;
+            }
+        }
+    }
+    CGFloat widthGap = maxRowWidth - rowWidth;
+    switch ([self flexContentAlign:collectionView]) {
+        case CJCollectionViewFlowLayoutFlexAlignContentCenter: {
+            CGFloat adjustX = widthGap / 2.;
+            for (UICollectionViewLayoutAttributes *itemLayout in rowLayouts) {
+                itemLayout.originalFrame = CGRectOffset(itemLayout.originalFrame, adjustX, 0.);
+            }
+        }
+            break;
+        case CJCollectionViewFlowLayoutFlexAlignContentRight: {
+            for (UICollectionViewLayoutAttributes *itemLayout in rowLayouts) {
+                itemLayout.originalFrame = CGRectOffset(itemLayout.originalFrame, widthGap, 0.);
+            }
+            
+        }
+            break;
+        case CJCollectionViewFlowLayoutFlexAlignContentStretchGap: {
+            if (rowLayouts.count <= 1) {
+                // 单个的当居中处理
+                CGFloat adjustX = widthGap / 2.;
+                for (UICollectionViewLayoutAttributes *itemLayout in rowLayouts) {
+                    itemLayout.originalFrame = CGRectOffset(itemLayout.originalFrame, adjustX, 0.);
+                }
+            } else {
+                CGFloat adjustXUnit = widthGap / (CGFloat)(rowLayouts.count - 1);
+                for (NSUInteger i = 1; i < rowLayouts.count; i++) {
+                    UICollectionViewLayoutAttributes *itemLayout = rowLayouts[i];
+                    itemLayout.originalFrame = CGRectOffset(itemLayout.originalFrame, adjustXUnit * i, 0.);
+                }
+            }
+        }
+            break;
+    case CJCollectionViewFlowLayoutFlexAlignContentLeft:
+    default: {
+            // 不用动
+        }
+            break;
+    }
+}
+
 - (void)prepareLayout:(UICollectionView *)collectionView forOriginalSection:(NSUInteger)originalSection {
     [super prepareLayout:collectionView forOriginalSection:originalSection];
     NSRange cellRange = [self sectionItemRange:collectionView forOriginalSection:originalSection];
@@ -471,10 +580,53 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
             attributes.originalFrame = CGRectMake(self.sectionLeftInset + gridInset.left + offsetX, gridInset.top + offsetY, itemSize.width, itemSize.height);
             offsetX += (itemSize.width + gapX);
             xCount++;
-            totalHeight = MAX(totalHeight ,CGRectGetMaxY(attributes.originalFrame));
+            totalHeight = MAX(totalHeight, CGRectGetMaxY(attributes.originalFrame));
             [itemsAttributes addObject:attributes];
         }
         _totalCellHeight = totalHeight + gridInset.bottom;
+    } else if (self.useFlexLayout) {
+        UIEdgeInsets flexInset = [self flexInset:collectionView];
+        CGFloat gapX = [self flexItemGap:collectionView];
+        CGFloat gapY = [self flexRowGap:collectionView];
+        CGFloat offsetX = 0.0;
+        CGFloat maxWidth = CGRectGetWidth(collectionView.frame) - self.sectionLeftInset - self.sectionRightInset - flexInset.left - flexInset.right;
+        CGFloat offsetY = 0.0;
+        NSUInteger xCount = 0;
+        CGFloat totalHeight = 0.0;
+        CGFloat rowHeight = 0.0;
+        NSMutableArray <UICollectionViewLayoutAttributes *> *rowLayouts = [NSMutableArray array];
+        for (NSUInteger i = 0; i < cellRange.length; i++) {
+            NSIndexPath *indexPath = [NSIndexPath indexPathForItem:cellRange.location + i inSection:originalSection];
+            UICollectionViewLayoutAttributes *attributes = [UICollectionViewLayoutAttributes layoutAttributesForCellWithIndexPath:indexPath];
+            CGSize itemSize = [self flexItemSize:collectionView forItem:i];
+            if (xCount > 0 && offsetX + itemSize.width > maxWidth) {
+                [self adjustFlexRowLayout:rowLayouts.copy
+                           collectionView:collectionView
+                                cellRange:cellRange
+                              maxRowWidth:maxWidth
+                                 rowWidth:(offsetX - gapX)
+                                rowHeight:rowHeight];
+                offsetX = 0.0;
+                offsetY += (rowHeight + gapY);
+                xCount = 0;
+                rowHeight = 0.0;
+                [rowLayouts removeAllObjects];
+            }
+            rowHeight = MAX(rowHeight, itemSize.height);
+            attributes.originalFrame = CGRectMake(self.sectionLeftInset + flexInset.left + offsetX, flexInset.top + offsetY, itemSize.width, itemSize.height);
+            offsetX += (itemSize.width + gapX);
+            xCount++;
+            totalHeight = MAX(totalHeight, CGRectGetMaxY(attributes.originalFrame));
+            [itemsAttributes addObject:attributes];
+            [rowLayouts addObject:attributes];
+        }
+        [self adjustFlexRowLayout:rowLayouts.copy
+                   collectionView:collectionView
+                        cellRange:cellRange
+                      maxRowWidth:maxWidth
+                         rowWidth:(offsetX - gapX)
+                        rowHeight:rowHeight];
+        _totalCellHeight = totalHeight + flexInset.bottom;
     } else {
         CGFloat offset = 0.0;
         for (NSUInteger i = 0; i < cellRange.length; i++) {
