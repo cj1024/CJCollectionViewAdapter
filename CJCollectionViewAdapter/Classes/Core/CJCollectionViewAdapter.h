@@ -42,7 +42,8 @@ extern const CGFloat kCJCollectionViewAdapterStickyHeaderFooterZIndex;
 
 - (void)collectionViewAdapterReload;
 
-- (void)collectionViewPerformBatchUpdates:(void (^ __nullable)(void))updates completion:(void (^ __nullable)(BOOL finished))completion;
+- (void)collectionViewPerformBatchUpdates:(void (^ __nullable)(void))updates completion:(void (^ __nullable)(BOOL finished))completion; // without animation
+- (void)collectionViewPerformBatchUpdates:(void (^ __nullable)(void))updates completion:(void (^ __nullable)(BOOL finished))completion animated:(BOOL)animated;
 
 - (void)sectionDataReload:(nonnull CJCollectionViewSectionData *)sectionData animated:(BOOL)animated;
 - (void)sectionDataAtSectionReload:(NSUInteger)section animated:(BOOL)animated;
