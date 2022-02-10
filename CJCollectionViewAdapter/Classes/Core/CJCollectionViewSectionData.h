@@ -189,7 +189,7 @@ typedef NS_ENUM(NSUInteger, CJCollectionViewFlowLayoutFlexAlignContent) {
 - (CGFloat)gridItemHorizontalGap:(nonnull UICollectionView *)collectionView;
 - (CGFloat)gridItemVerticalGap:(nonnull UICollectionView *)collectionView;
 
-// FLex布局
+// Flex布局
 - (UIEdgeInsets)flexInset:(nonnull UICollectionView *)collectionView;
 - (CGSize)flexItemSize:(nonnull UICollectionView *)collectionView forItem:(NSUInteger)item; // 每一行的高度以最大高度计算
 - (CGFloat)flexItemGap:(nonnull UICollectionView *)collectionView;

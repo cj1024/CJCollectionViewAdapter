@@ -203,6 +203,8 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 @property(nonatomic, weak, readwrite, nullable) UICollectionView *bridgedCollectionView;
 @property(nonatomic, strong, readwrite, nonnull) CJCollectionViewAdapterViewLayout *internalWrappedCollectionViewLayout;
 @property(nonatomic, strong, readwrite) NSArray <__kindof CJCollectionViewSectionData *> *internalSections;
+@property(nonatomic, assign, readwrite) BOOL onBatchUpdate;
+@property(nonatomic, strong, readonly) NSMutableSet <__kindof CJCollectionViewSectionData *> *batchUpdateChangedSection;
 
 - (NSUInteger)safeSectionCount;
 - (void)attachSectionData:(__kindof CJCollectionViewSectionData *_Null_unspecified)sectionData;
@@ -219,6 +221,14 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 @end
 
 @implementation CJCollectionViewAdapter
+
+- (instancetype)init {
+    self = [super init];
+    if (self) {
+        _batchUpdateChangedSection = [NSMutableSet set];
+    }
+    return self;
+}
 
 - (void)setBridgedCollectionView:(UICollectionView *)bridgedCollectionView {
     _bridgedCollectionView = bridgedCollectionView;
@@ -781,6 +791,23 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 
 @implementation CJCollectionViewAdapter (SectionUpdate)
 
+- (void)sectionItemsChanged:(nonnull CJCollectionViewSectionData *)sectionData inCollectionView:(nonnull UICollectionView *)collectionView section:(NSUInteger)section {
+    if (!self.onBatchUpdate) {
+        [self updateSectionRecordInfo:sectionData inCollectionView:collectionView section:section];
+    } else {
+        [self.batchUpdateChangedSection addObject:sectionData];
+    }
+}
+
+- (void)updateSectionRecordInfo:(nonnull CJCollectionViewSectionData *)sectionData inCollectionView:(nonnull UICollectionView *)collectionView section:(NSUInteger)section {
+    sectionData.sectionSeparatorHeaderIndexRecorder = [sectionData sectionSeparatorHeaderIndex:collectionView forOriginalSection:section];
+    sectionData.sectionInnerHeaderIndexRecorder = [sectionData sectionInnerHeaderIndex:collectionView forOriginalSection:section];
+    sectionData.sectionSeparatorFooterIndexRecorder = [sectionData sectionSeparatorFooterIndex:collectionView forOriginalSection:section];
+    sectionData.sectionInnerFooterIndexRecorder = [sectionData sectionInnerFooterIndex:collectionView forOriginalSection:section];
+    sectionData.sectionItemsRangeRecorder = [sectionData sectionItemRange:collectionView forOriginalSection:section];
+    sectionData.sectionWrappedItemsCountRecorder = [sectionData collectionViewWrappedItemCount:collectionView forOriginalSection:section];
+}
+
 - (void)performCollectionViewUpdate:(dispatch_block_t)updateAction withAnimation:(BOOL)animated {
     BOOL oldAnimated = [UIView areAnimationsEnabled];
     [UIView setAnimationsEnabled:animated];
@@ -796,7 +823,19 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 }
 
 - (void)collectionViewPerformBatchUpdates:(void (^ __nullable)(void))updates completion:(void (^ __nullable)(BOOL finished))completion {
-    [self.bridgedCollectionView performBatchUpdates:updates completion:completion];
+    [self collectionViewPerformBatchUpdates:updates completion:completion animated:NO];
+}
+
+- (void)collectionViewPerformBatchUpdates:(void (^ __nullable)(void))updates completion:(void (^ __nullable)(BOOL finished))completion animated:(BOOL)animated {
+    self.onBatchUpdate = YES;
+    [self performCollectionViewUpdate:^{
+        [self.bridgedCollectionView performBatchUpdates:updates completion:completion];
+    } withAnimation:animated];
+    self.onBatchUpdate = NO;
+    for (CJCollectionViewSectionData *sectionData in self.batchUpdateChangedSection) {
+        [self sectionItemsChanged:sectionData inCollectionView:self.bridgedCollectionView section:[self.internalSections indexOfObject:sectionData]];
+    }
+    [self.batchUpdateChangedSection removeAllObjects];
 }
 
 - (void)sectionDataReload:(nonnull CJCollectionViewSectionData *)sectionData animated:(BOOL)animated {
@@ -913,19 +952,6 @@ static NSString * const kCJCollectionViewAdapterDefaultReuseIndentifer = @"colle
 @end
 
 @implementation CJCollectionViewAdapter (SectionChildrenUpdate)
-
-- (void)sectionItemsChanged:(nonnull CJCollectionViewSectionData *)sectionData inCollectionView:(nonnull UICollectionView *)collectionView section:(NSUInteger)section {
-    [self updateSectionRecordInfo:sectionData inCollectionView:collectionView section:section];
-}
-
-- (void)updateSectionRecordInfo:(nonnull CJCollectionViewSectionData *)sectionData inCollectionView:(nonnull UICollectionView *)collectionView section:(NSUInteger)section {
-    sectionData.sectionSeparatorHeaderIndexRecorder = [sectionData sectionSeparatorHeaderIndex:collectionView forOriginalSection:section];
-    sectionData.sectionInnerHeaderIndexRecorder = [sectionData sectionInnerHeaderIndex:collectionView forOriginalSection:section];
-    sectionData.sectionSeparatorFooterIndexRecorder = [sectionData sectionSeparatorFooterIndex:collectionView forOriginalSection:section];
-    sectionData.sectionInnerFooterIndexRecorder = [sectionData sectionInnerFooterIndex:collectionView forOriginalSection:section];
-    sectionData.sectionItemsRangeRecorder = [sectionData sectionItemRange:collectionView forOriginalSection:section];
-    sectionData.sectionWrappedItemsCountRecorder = [sectionData collectionViewWrappedItemCount:collectionView forOriginalSection:section];
-}
 
 - (void)updateItemWithOldIndex:(NSInteger)oldItem index:(NSInteger)item totalItemsCount:(NSInteger)numberOfItems inSection:(NSInteger)section animated:(BOOL)animated {
     if (item < 0 && oldItem >= 0 && numberOfItems > oldItem) {
