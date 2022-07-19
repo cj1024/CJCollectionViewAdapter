@@ -583,7 +583,11 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
             totalHeight = MAX(totalHeight, CGRectGetMaxY(attributes.originalFrame));
             [itemsAttributes addObject:attributes];
         }
-        _totalCellHeight = totalHeight + gridInset.bottom;
+        if (cellRange.length > 0) {
+            _totalCellHeight = MAX(totalHeight, gridInset.top) + gridInset.bottom;
+        } else {
+            _totalCellHeight = 0.0;
+        }
     } else if (self.useFlexLayout) {
         UIEdgeInsets flexInset = [self flexInset:collectionView];
         CGFloat gapX = [self flexItemGap:collectionView];
@@ -626,7 +630,11 @@ static NSString * const kCJCollectionViewSectionDataDefaultInnerHeaderFooterReus
                       maxRowWidth:maxWidth
                          rowWidth:(offsetX - gapX)
                         rowHeight:rowHeight];
-        _totalCellHeight = totalHeight + flexInset.bottom;
+        if (cellRange.length > 0) {
+            _totalCellHeight = MAX(totalHeight, flexInset.top) + flexInset.bottom;
+        } else {
+            _totalCellHeight = 0.0;
+        }
     } else {
         CGFloat offset = 0.0;
         for (NSUInteger i = 0; i < cellRange.length; i++) {
