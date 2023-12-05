@@ -506,7 +506,7 @@ static NSString * const kCollectionViewTestSectionDataCarouselCellReuseIndetifie
         reuseableView = [[CJCarouselViewPage alloc] init];
     }
     reuseableView.imageView.contentMode = UIViewContentModeScaleAspectFill;
-    [reuseableView.imageView sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://bing.ioliu.cn/v1/rand/?w=800&h=600&i=%@&t=%lld", @(index).stringValue, (long long)self.timestamp]] placeholderImage:nil options:SDWebImageRetryFailed];
+    [reuseableView.imageView sd_setImageWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"https://bing.ee123.net/img/rand?w=800x600&i=%@&t=%lld", @(index).stringValue, (long long)self.timestamp]] placeholderImage:nil options:SDWebImageRetryFailed];
     return reuseableView;
 }
 
